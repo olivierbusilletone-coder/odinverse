@@ -1,29 +1,26 @@
-<div id="status">❌ Non connecté</div>
-<div id="address"></div>
-<button id="connectBtn">Connect Wallet</button>
-
-<script type="module">
-import { WalletConnectProvider } from "@multiversx/sdk-wallet-connect-provider";
+import { WalletConnectProvider } from "https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/out/walletConnectProvider.esm.js";
 
 let provider;
 
-document.getElementById("connectBtn").addEventListener("click", connectWallet);
+const connectBtn = document.getElementById("connectBtn");
+const status = document.getElementById("status");
+const addressEl = document.getElementById("address");
+
+connectBtn.addEventListener("click", connectWallet);
 
 async function connectWallet() {
-    const status = document.getElementById("status");
     status.innerText = "🔄 Connexion en cours...";
 
     try {
+        // Initialisation du provider WalletConnect
         provider = new WalletConnectProvider({
             projectId: "multiversx-dapp",
-            chainId: "1", // Mainnet. Pour testnet : "T"
+            chainId: "1" // Mainnet, utiliser "T" pour Testnet
         });
 
-        // Initialise le provider
-        await provider.init();
+        await provider.init(); // prépare le QR code
 
-        // Ouvre le QR code / wallet modal
-        const loginResult = await provider.login();
+        const loginResult = await provider.login(); // ouvre le modal / QR code
 
         if (!loginResult) {
             status.innerText = "❌ Connexion annulée ou échouée";
@@ -31,8 +28,7 @@ async function connectWallet() {
         }
 
         const address = await provider.getAddress();
-        document.getElementById("address").innerText =
-            "🟢 Wallet connecté : " + address;
+        addressEl.innerText = "🟢 Wallet connecté : " + address;
         status.innerText = "✅ Connexion réussie";
 
     } catch (err) {
@@ -40,4 +36,12 @@ async function connectWallet() {
         status.innerText = "❌ Erreur : " + err.message;
     }
 }
-</script>
+
+// Fonction mint temporaire
+window.mint = function() {
+    if (!provider) {
+        alert("Connecte ton wallet d'abord !");
+        return;
+    }
+    alert("Mint NFT lancé (simulation) 🚀");
+};
