@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>ODINVERSE — Viking NFT Project</title>
+	<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/out/walletConnectProvider.umd.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-core/out/sdkCore.umd.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <button onclick="connectWallet()">🔐 Connect Wallet</button>
-<p id="walletAddress"></p>
+
+<p id="status"></p>
+<p id="address"></p>
 
 <header>
     <h1>⚔️ ODINVERSE</h1>
@@ -58,4 +62,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-

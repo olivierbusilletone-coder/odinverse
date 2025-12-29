@@ -1,15 +1,33 @@
-function connectWallet() {
-    const callbackUrl = encodeURIComponent(window.location.href);
-    const webWalletUrl = `https://wallet.multiversx.com/connect?callbackUrl=${callbackUrl}`;
+let provider;
 
-    window.location.href = webWalletUrl;
-}
-window.onload = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const address = urlParams.get("address");
+async function connectWallet() {
+    const status = document.getElementById("status");
+    status.innerText = "🔄 Connexion en cours...";
 
-    if (address) {
-        document.getElementById("walletAddress").innerText =
-            "🟢 Wallet connecté : " + address;
+    const walletConnectBridge = "https://bridge.walletconnect.org";
+    const chainId = "1"; // Mainnet (D = devnet, T = testnet)
+
+    provider = new window.MultiversXWalletConnectProvider.WalletConnectProvider(
+        walletConnectBridge,
+        {
+            projectId: "multiversx-dapp",
+            chainId: chainId
+        }
+    );
+
+    const isInitialized = await provider.init();
+
+    if (!isInitialized) {
+        status.innerText = "❌ Erreur WalletConnect";
+        return;
     }
-};
+
+    await provider.login();
+
+    const address = await provider.getAddress();
+
+    document.getElementById("address").innerText =
+        "🟢 Wallet connecté : " + address;
+
+    status.innerText = "✅ Connexion réussie";
+}
