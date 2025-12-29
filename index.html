@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>ODINVERSE — Viking NFT Project</title>
-    <!-- SDK MultiversX -->
-    <script type="module" src="script.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
+
+    <!-- SDK MultiversX UMD -->
+    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/out/walletConnectProvider.umd.js"></script>
 </head>
 <body>
 
@@ -58,6 +59,50 @@
 <footer>
     <p>© 2025 ODINVERSE — Built for warriors</p>
 </footer>
+
+<script>
+let provider;
+
+document.getElementById("connectBtn").addEventListener("click", async () => {
+    const status = document.getElementById("status");
+    const addressEl = document.getElementById("address");
+
+    status.innerText = "🔄 Connexion en cours...";
+
+    try {
+        // UMD expose MultiversXWalletConnectProvider sur window
+        provider = new window.MultiversXWalletConnectProvider.WalletConnectProvider({
+            projectId: "multiversx-dapp",
+            chainId: "1" // Mainnet ("T" pour Testnet)
+        });
+
+        await provider.init(); // initialise le QR code
+        const loginResult = await provider.login(); // ouvre le QR code
+
+        if (!loginResult) {
+            status.innerText = "❌ Connexion annulée ou échouée";
+            return;
+        }
+
+        const address = await provider.getAddress();
+        addressEl.innerText = "🟢 Wallet connecté : " + address;
+        status.innerText = "✅ Connexion réussie";
+
+    } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Erreur : " + err.message;
+    }
+});
+
+// Mint simulé
+function mint() {
+    if (!provider) {
+        alert("Connecte ton wallet d'abord !");
+        return;
+    }
+    alert("Mint NFT lancé (simulation) 🚀");
+}
+</script>
 
 </body>
 </html>
