@@ -4,103 +4,148 @@
     <meta charset="UTF-8">
     <title>ODINVERSE — Viking NFT Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
 
-    <!-- SDK MultiversX UMD -->
-    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/out/walletConnectProvider.umd.js"></script>
+    <!-- ✅ SDK WalletConnect MultiversX (UMD navigateur) -->
+    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0e0e0e;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            padding: 60px 20px;
+            background: linear-gradient(180deg, #1a1a1a, #000);
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 14px 28px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #ff9800;
+            color: #000;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #ffc107;
+        }
+
+        section {
+            padding: 40px 20px;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        footer {
+            padding: 20px;
+            background: #000;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
 
-<button id="connectBtn">🔐 Connect Wallet</button>
-
-<p id="status">❌ Non connecté</p>
-<p id="address"></p>
-
 <header>
     <h1>⚔️ ODINVERSE</h1>
-    <p>Le projet NFT Viking ultime sur la blockchain</p>
-    <a href="#mint" class="btn">Rejoindre le Valhalla</a>
+    <p>Le projet NFT Viking ultime sur MultiversX</p>
+
+    <button id="connectBtn">🔐 Connect Wallet</button>
+
+    <div class="status" id="status">❌ Non connecté</div>
+    <div class="status" id="address"></div>
 </header>
 
-<section id="about">
+<section>
     <h2>🔥 Le Projet</h2>
     <p>
         ODINVERSE est une collection NFT inspirée de la mythologie viking.
-        Chaque guerrier possède des pouvoirs, des runes et des avantages exclusifs.
+        Guerriers, runes, avantages exclusifs et mini-jeux on-chain.
     </p>
 </section>
 
-<section id="features">
+<section>
     <h2>🧠 Avantages</h2>
-    <div class="grid">
-        <div class="card">⚔️ Accès aux jeux on-chain</div>
-        <div class="card">🪙 Airdrops & tokens</div>
-        <div class="card">🛡️ Avantages partenaires</div>
-        <div class="card">🔥 Challenges & récompenses</div>
-    </div>
+    <p>⚔️ Jeux on-chain · 🪙 Airdrops · 🛡️ Avantages partenaires · 🔥 Challenges</p>
 </section>
 
-<section id="mint">
-    <h2>💎 Mint NFT</h2>
+<section>
+    <h2>💎 Mint</h2>
     <p>Prix : <strong>0.05 EGLD</strong></p>
-    <button onclick="mint()">Mint maintenant</button>
-</section>
-
-<section id="roadmap">
-    <h2>🛣️ Roadmap</h2>
-    <ul>
-        <li>Phase 1 — Lancement de la collection</li>
-        <li>Phase 2 — Mini-jeux & RuneRandom</li>
-        <li>Phase 3 — Token & partenariats</li>
-        <li>Phase 4 — Valhalla Metaverse</li>
-    </ul>
+    <button disabled>Mint bientôt disponible</button>
 </section>
 
 <footer>
-    <p>© 2025 ODINVERSE — Built for warriors</p>
+    © 2025 ODINVERSE — Built for warriors
 </footer>
 
 <script>
-let provider;
+/* ================================
+   WALLET CONNECT LOGIC
+================================ */
 
-document.getElementById("connectBtn").addEventListener("click", async () => {
-    const status = document.getElementById("status");
-    const addressEl = document.getElementById("address");
+let provider = null;
 
-    status.innerText = "🔄 Connexion en cours...";
+const statusEl = document.getElementById("status");
+const addressEl = document.getElementById("address");
+const connectBtn = document.getElementById("connectBtn");
+
+connectBtn.addEventListener("click", connectWallet);
+
+async function connectWallet() {
+    statusEl.innerText = "🔄 Connexion en cours...";
+    addressEl.innerText = "";
 
     try {
-        // UMD expose MultiversXWalletConnectProvider sur window
-        provider = new window.MultiversXWalletConnectProvider.WalletConnectProvider({
-            projectId: "multiversx-dapp",
-            chainId: "1" // Mainnet ("T" pour Testnet)
+        // 🔍 Sécurité : vérifier que le SDK est bien chargé
+        if (typeof WalletConnectProvider === "undefined") {
+            throw new Error("SDK WalletConnect non chargé");
+        }
+
+        // 🔐 Initialisation du provider
+        provider = new WalletConnectProvider({
+            chainId: "1" // Mainnet | "T" Testnet | "D" Devnet
         });
 
-        await provider.init(); // initialise le QR code
-        const loginResult = await provider.login(); // ouvre le QR code
+        // 📲 Génère le QR Code
+        await provider.init();
 
-        if (!loginResult) {
-            status.innerText = "❌ Connexion annulée ou échouée";
+        // 🔑 Ouvre la fenêtre WalletConnect
+        const connected = await provider.login();
+
+        if (!connected) {
+            statusEl.innerText = "❌ Connexion annulée";
             return;
         }
 
+        // 📬 Adresse wallet
         const address = await provider.getAddress();
-        addressEl.innerText = "🟢 Wallet connecté : " + address;
-        status.innerText = "✅ Connexion réussie";
+
+        statusEl.innerText = "✅ Wallet connecté";
+        addressEl.innerText = "🟢 " + address;
+
+        connectBtn.innerText = "🔓 Wallet connecté";
+        connectBtn.disabled = true;
 
     } catch (err) {
-        console.error(err);
-        status.innerText = "❌ Erreur : " + err.message;
+        console.error("Wallet error:", err);
+        statusEl.innerText = "❌ Erreur : " + err.message;
     }
-});
-
-// Mint simulé
-function mint() {
-    if (!provider) {
-        alert("Connecte ton wallet d'abord !");
-        return;
-    }
-    alert("Mint NFT lancé (simulation) 🚀");
 }
 </script>
 
