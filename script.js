@@ -1,42 +1,15 @@
-let provider;
+function connectWallet() {
+    const callbackUrl = encodeURIComponent(window.location.href);
+    const webWalletUrl = `https://wallet.multiversx.com/connect?callbackUrl=${callbackUrl}`;
 
-    async function connectWallet() {
-        const status = document.getElementById("status");
-        const addressEl = document.getElementById("address");
+    window.location.href = webWalletUrl;
+}
+window.onload = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const address = urlParams.get("address");
 
-        status.innerText = "🔄 Connexion au wallet...";
-        addressEl.innerText = "";
-
-        try {
-            const walletConnectBridge = "https://bridge.walletconnect.org";
-            const chainId = "1"; // Mainnet | D = Devnet | T = Testnet
-
-            provider = new window.MultiversXWalletConnectProvider.WalletConnectProvider(
-                walletConnectBridge,
-                {
-                    projectId: "odinverse-dapp",
-                    chainId: chainId
-                }
-            );
-
-            const initialized = await provider.init();
-
-            if (!initialized) {
-                status.innerText = "❌ Impossible d'initialiser WalletConnect";
-                return;
-            }
-
-            await provider.login(); // ➜ QR code xPortal
-
-            const address = await provider.getAddress();
-
-            status.innerText = "✅ Wallet connecté";
-            addressEl.innerText = "🟢 Adresse : " + address;
-
-            localStorage.setItem("mx_wallet", address);
-
-        } catch (err) {
-            console.error(err);
-            status.innerText = "❌ Connexion annulée ou erreur wallet";
-        }
+    if (address) {
+        document.getElementById("walletAddress").innerText =
+            "🟢 Wallet connecté : " + address;
     }
+};
