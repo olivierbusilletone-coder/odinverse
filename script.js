@@ -1,33 +1,43 @@
+<div id="status">❌ Non connecté</div>
+<div id="address"></div>
+<button id="connectBtn">Connect Wallet</button>
+
+<script type="module">
+import { WalletConnectProvider } from "@multiversx/sdk-wallet-connect-provider";
+
 let provider;
+
+document.getElementById("connectBtn").addEventListener("click", connectWallet);
 
 async function connectWallet() {
     const status = document.getElementById("status");
     status.innerText = "🔄 Connexion en cours...";
 
-    const walletConnectBridge = "https://bridge.walletconnect.org";
-    const chainId = "1"; // Mainnet (D = devnet, T = testnet)
-
-    provider = new window.MultiversXWalletConnectProvider.WalletConnectProvider(
-        walletConnectBridge,
-        {
+    try {
+        provider = new WalletConnectProvider({
             projectId: "multiversx-dapp",
-            chainId: chainId
+            chainId: "1", // Mainnet. Pour testnet : "T"
+        });
+
+        // Initialise le provider
+        await provider.init();
+
+        // Ouvre le QR code / wallet modal
+        const loginResult = await provider.login();
+
+        if (!loginResult) {
+            status.innerText = "❌ Connexion annulée ou échouée";
+            return;
         }
-    );
 
-    const isInitialized = await provider.init();
+        const address = await provider.getAddress();
+        document.getElementById("address").innerText =
+            "🟢 Wallet connecté : " + address;
+        status.innerText = "✅ Connexion réussie";
 
-    if (!isInitialized) {
-        status.innerText = "❌ Erreur WalletConnect";
-        return;
+    } catch (err) {
+        console.error(err);
+        status.innerText = "❌ Erreur : " + err.message;
     }
-
-    await provider.login();
-
-    const address = await provider.getAddress();
-
-    document.getElementById("address").innerText =
-        "🟢 Wallet connecté : " + address;
-
-    status.innerText = "✅ Connexion réussie";
 }
+</script>
