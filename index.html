@@ -1,136 +1,100 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Viking MultiversX Wallet</title>
-  <!-- Bootstrap pour modals et boutons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background: url('https://images.unsplash.com/photo-1602207903760-7ed18e5ee22c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5MTMyMXwwfDF8c2VhcmNofDF8fHZpa2luZ3xlbnwwfHx8fDE2OTI5MjQwNzI&ixlib=rb-4.0.3&q=80&w=1080') no-repeat center center fixed;
-      background-size: cover;
-      color: #f5f5dc;
-      font-family: 'Cinzel', serif;
-      text-shadow: 1px 1px 2px black;
-    }
-    header {
-      text-align: center;
-      padding: 50px 0 20px 0;
-    }
-    #walletInfo {
-      margin-top: 20px;
-      text-align: center;
-    }
-    #connectBtn, #disconnectBtn {
-      margin: 10px;
-    }
-    .viking-container {
-      background-color: rgba(0,0,0,0.6);
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 500px;
-      margin: auto;
-    }
-    #MyWalletConnectQRContainer svg {
-      width: 100%;
-      height: auto;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viking MultiversX Wallet</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/walletConnectProvider.umd.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { background:#1a1a1a; color:#f5f5dc; font-family: 'Cinzel', serif; text-align:center; }
+.viking-container { margin:auto; margin-top:100px; padding:30px; max-width:400px; background:rgba(0,0,0,0.7); border-radius:15px; }
+#MyWalletConnectQRContainer svg { width:100%; height:auto; }
+button { margin:10px; }
+</style>
 </head>
 <body>
 
-  <header>
-    <h1>⚔️ Viking MultiversX ⚔️</h1>
-    <p>Connectez votre wallet et embarquez pour le raid !</p>
-  </header>
-
-  <div class="viking-container text-center">
-    <button id="connectBtn" class="btn btn-warning btn-lg">Connect Wallet</button>
-    <button id="disconnectBtn" class="btn btn-danger btn-lg" style="display:none;">Disconnect</button>
-
-    <div id="walletInfo">
-      <p id="status">Status: Not connected</p>
-      <p id="address"></p>
-    </div>
+<div class="viking-container">
+  <h1>⚔️ Viking MultiversX ⚔️</h1>
+  <button id="connectBtn" class="btn btn-warning btn-lg">Connect Wallet</button>
+  <button id="disconnectBtn" class="btn btn-danger btn-lg" style="display:none;">Disconnect</button>
+  <div id="walletInfo">
+    <p id="status">Status: Not connected</p>
+    <p id="address"></p>
   </div>
+</div>
 
-  <!-- Modal QR Code -->
-  <div class="modal fade" id="MyWalletConnectModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Scan QR Code avec xPortal</h5>
-          <button type="button" class="btn-close" onclick="closeModal()"></button>
-        </div>
-        <div class="modal-body text-center" id="MyWalletConnectQRContainer">
-        </div>
+<!-- Modal QR Code -->
+<div class="modal fade" id="MyWalletConnectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Scan QR Code avec xPortal</h5>
+        <button type="button" class="btn-close" onclick="closeModal()"></button>
       </div>
+      <div class="modal-body" id="MyWalletConnectQRContainer"></div>
     </div>
   </div>
+</div>
 
-  <!-- Librairies -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module">
-    import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/lib/browser/qrcode.min.js";
-    import { WalletConnectV2Provider } from "https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/esm/index.js";
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const statusEl = document.getElementById("status");
+const addressEl = document.getElementById("address");
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
 
-    const statusEl = document.getElementById("status");
-    const addressEl = document.getElementById("address");
-    const connectBtn = document.getElementById("connectBtn");
-    const disconnectBtn = document.getElementById("disconnectBtn");
+let provider = null;
 
-    let provider = null;
+const projectId = "f4f84c031236a02d1fda5167859868f4"; // ton Project ID WalletConnect
+const relayUrl = "wss://relay.walletconnect.com";
+const chainId = "T"; // Testnet
 
-    const projectId = "f4f84c031236a02d1fda5167859868f4"; // Générer depuis WalletConnect Cloud
-    const relayUrl = "wss://relay.walletconnect.com";
-    const chainId = "T"; // Testnet
+const callbacks = {
+  onClientLogin: async function () {
+    closeModal();
+    const address = await provider.getAddress();
+    statusEl.textContent = "Status: Connected";
+    addressEl.textContent = "Address: " + address;
+    connectBtn.style.display = "none";
+    disconnectBtn.style.display = "inline-block";
+  },
+  onClientLogout: async function () {
+    statusEl.textContent = "Status: Not connected";
+    addressEl.textContent = "";
+    connectBtn.style.display = "inline-block";
+    disconnectBtn.style.display = "none";
+  }
+};
 
-    const callbacks = {
-      onClientLogin: async function () {
-        closeModal();
-        const address = await provider.getAddress();
-        statusEl.textContent = "Status: Connected";
-        addressEl.textContent = "Address: " + address;
-        connectBtn.style.display = "none";
-        disconnectBtn.style.display = "inline-block";
-      },
-      onClientLogout: async function () {
-        statusEl.textContent = "Status: Not connected";
-        addressEl.textContent = "";
-        connectBtn.style.display = "inline-block";
-        disconnectBtn.style.display = "none";
-      },
-      onClientEvent: async function (event) {
-        console.log("Event:", event);
-      }
-    };
+// ⚡ Utiliser UMD
+provider = new window.WalletConnectV2Provider(callbacks, chainId, relayUrl, projectId);
 
-    provider = new WalletConnectV2Provider(callbacks, chainId, relayUrl, projectId);
+async function openModal(connectorUri) {
+  const svg = await QRCode.toString(connectorUri, { type: "svg" });
+  document.getElementById("MyWalletConnectQRContainer").innerHTML = svg;
+  const myModal = new bootstrap.Modal(document.getElementById('MyWalletConnectModal'));
+  myModal.show();
+}
 
-    async function openModal(connectorUri) {
-      const svg = await QRCode.toString(connectorUri, { type: "svg" });
-      document.getElementById("MyWalletConnectQRContainer").innerHTML = svg;
-      const myModal = new bootstrap.Modal(document.getElementById('MyWalletConnectModal'));
-      myModal.show();
-    }
+function closeModal() {
+  const modalEl = document.getElementById('MyWalletConnectModal');
+  const modal = bootstrap.Modal.getInstance(modalEl);
+  if (modal) modal.hide();
+}
 
-    function closeModal() {
-      const modalEl = document.getElementById('MyWalletConnectModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
-    }
+connectBtn.addEventListener("click", async () => {
+  await provider.init();
+  const { uri, approval } = await provider.connect();
+  await openModal(uri);
+  await provider.login({ approval });
+});
 
-    connectBtn.addEventListener("click", async () => {
-      await provider.init();
-      const { uri, approval } = await provider.connect();
-      await openModal(uri);
-      await provider.login({ approval });
-    });
-
-    disconnectBtn.addEventListener("click", async () => {
-      await provider.logout();
-    });
-  </script>
+disconnectBtn.addEventListener("click", async () => {
+  await provider.logout();
+});
+</script>
 </body>
 </html>
