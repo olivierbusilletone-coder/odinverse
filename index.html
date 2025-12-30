@@ -2,90 +2,59 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>ODINVERSE — Viking NFT</title>
+<title>ODINVERSE WalletConnect</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- SDK MultiversX WalletConnect -->
-<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
+<!-- UMD WalletConnectProvider -->
+<script src="assets/walletConnectProvider.umd.js"></script>
+<!-- QRCode lib -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
-<style>
-body {
-    background:#0e0e0e;
-    color:#fff;
-    font-family:Arial, sans-serif;
-    text-align:center;
-}
-button {
-    padding:14px 28px;
-    border:none;
-    border-radius:8px;
-    background:#ff9800;
-    font-size:16px;
-    cursor:pointer;
-}
-.status { margin-top:15px; }
-</style>
 </head>
-
 <body>
+<h1>ODINVERSE WalletConnect</h1>
 
-<h1>⚔️ ODINVERSE</h1>
-<button id="connectBtn">🔐 Connect Wallet</button>
-<div class="status" id="status">❌ Non connecté</div>
-<div class="status" id="address"></div>
+<button onclick="connectWallet()">🔐 Connect Wallet</button>
+<p id="status">❌ Non connecté</p>
+<p id="address"></p>
+<canvas id="qr"></canvas>
 
 <script>
 let provider;
 
-const statusEl = document.getElementById("status");
-const addressEl = document.getElementById("address");
-const connectBtn = document.getElementById("connectBtn");
-
-connectBtn.onclick = connectWallet;
-
 async function connectWallet() {
-    statusEl.innerText = "🔄 Connexion en cours...";
-    addressEl.innerText = "";
+  const { WalletConnectProvider } = window.MultiversXWalletConnectProvider;
 
-    try {
-        // ✅ BON objet global (réel)
-        if (
-            !window.multiversxSdkWalletConnectProvider ||
-            !window.multiversxSdkWalletConnectProvider.WalletConnectProvider
-        ) {
-            throw new Error("SDK WalletConnect non chargé");
-        }
+  const callbacks = {
+    onClientLogin: async () => {
+      const address = await provider.getAddress();
+      document.getElementById("status").innerText = "✅ Connecté";
+      document.getElementById("address").innerText = address;
+    },
+    onClientLogout: () => {
+      document.getElementById("status").innerText = "❌ Déconnecté";
+    },
+    onClientEvent: e => console.log("WC Event", e)
+  };
 
-        const WalletConnectProvider =
-            window.multiversxSdkWalletConnectProvider.WalletConnectProvider;
+  provider = new WalletConnectProvider(
+    callbacks,
+    "1", // Mainnet
+    "wss://relay.walletconnect.com",
+    "TON_PROJECT_ID_ICI"
+  );
 
-        provider = new WalletConnectProvider({
-            projectId: "f4f84c031236a02d1fda5167859868f4",
-            chainId: "1", // Mainnet
-            relayUrl: "wss://relay.walletconnect.com"
-        });
+  await provider.init();
 
-        await provider.init();
+  const { uri, approval } = await provider.connect();
 
-        await provider.login({
-            callbackUrl: window.location.href,
-            qrCodeModal: true
-        });
+  // Générer le QR code
+  QRCode.toCanvas(document.getElementById("qr"), uri);
 
-        const address = provider.getAddress();
-
-        statusEl.innerText = "✅ Wallet connecté";
-        addressEl.innerText = "🟢 " + address;
-        connectBtn.innerText = "🔓 Wallet connecté";
-        connectBtn.disabled = true;
-
-    } catch (err) {
-        console.error(err);
-        statusEl.innerText = "❌ Erreur : " + err.message;
-    }
+  // Attendre login
+  await provider.login({ approval });
 }
 </script>
-
 
 </body>
 </html>
