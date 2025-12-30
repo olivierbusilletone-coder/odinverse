@@ -50,63 +50,6 @@ button {
     <div id="MyWalletConnectQRContainer"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/walletConnectProvider.umd.js"></script>
-<script>
-const statusEl = document.getElementById("status");
-const addressEl = document.getElementById("address");
-const connectBtn = document.getElementById("connectBtn");
-const disconnectBtn = document.getElementById("disconnectBtn");
-const qrContainer = document.getElementById("MyWalletConnectQRContainer");
-
-let provider = null;
-
-// 🔑 Remplacez par votre Project ID WalletConnect 2.0
-const projectId = "f4f84c031236a02d1fda5167859868f4"; 
-const relayUrl = "wss://relay.walletconnect.com";
-const chainId = "T"; // Testnet
-
-const callbacks = {
-    onClientLogin: async function () {
-        const address = await provider.getAddress();
-        statusEl.textContent = "Status: Connected";
-        addressEl.textContent = "Address: " + address;
-        connectBtn.style.display = "none";
-        disconnectBtn.style.display = "inline-block";
-        qrContainer.innerHTML = "";
-    },
-    onClientLogout: async function () {
-        statusEl.textContent = "Status: Not connected";
-        addressEl.textContent = "";
-        connectBtn.style.display = "inline-block";
-        disconnectBtn.style.display = "none";
-    }
-};
-
-// Instanciation du provider
-provider = new window.WalletConnectV2Provider(callbacks, chainId, relayUrl, projectId);
-
-async function showQR(uri) {
-    const svg = await QRCode.toString(uri, { type: "svg" });
-    qrContainer.innerHTML = svg;
-}
-
-connectBtn.addEventListener("click", async () => {
-    try {
-        await provider.init();
-        const { uri, approval } = await provider.connect();
-        await showQR(uri);
-        await provider.login({ approval });
-    } catch (e) {
-        console.error("Erreur WalletConnect:", e);
-        alert("Erreur WalletConnect : " + e.message);
-    }
-});
-
-disconnectBtn.addEventListener("click", async () => {
-    await provider.logout();
-});
-</script>
+<script type="module" src="/main.js"></script>
 </body>
 </html>

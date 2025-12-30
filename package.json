@@ -1,18 +1,22 @@
 {
-  "name": "odinverse-walletconnect",
+  "name": "odinverse-mint",
   "version": "1.0.0",
-  "type": "commonjs",
+  "description": "dApp Odinverse - Mint Viking avec WalletConnect 2.0",
+  "main": "main.js",
+  "type": "module",
   "scripts": {
-    "build": "npx rollup -c rollup.config.cjs"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
+  "author": "Olivier Busillet",
+  "license": "MIT",
   "dependencies": {
-    "@multiversx/sdk-wallet-connect-provider": "^2.6.0",
+    "@multiversx/sdk-wallet-connect-provider": "^2.0.0",
+    "bootstrap": "^5.3.3",
     "qrcode": "^1.5.1"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^15.0.1",
-    "@rollup/plugin-commonjs": "^24.0.1",
-    "@rollup/plugin-json": "^5.0.0",
-    "rollup": "^3.30.0"
+    "vite": "^4.5.0"
   }
 }
