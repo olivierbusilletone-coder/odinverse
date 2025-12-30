@@ -2,82 +2,62 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>ODINVERSE — Viking NFT Project</title>
+<title>ODINVERSE — Viking NFT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- ✅ SDK WalletConnect MultiversX -->
+<!-- SDK MultiversX WalletConnect -->
 <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: #0e0e0e;
-    color: #fff;
-    text-align: center;
-    margin: 0;
-}
-header {
-    padding: 60px 20px;
-    background: linear-gradient(180deg, #1a1a1a, #000);
+    background:#0e0e0e;
+    color:#fff;
+    font-family:Arial, sans-serif;
+    text-align:center;
 }
 button {
-    padding: 14px 28px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 8px;
-    border: none;
-    background: #ff9800;
+    padding:14px 28px;
+    border:none;
+    border-radius:8px;
+    background:#ff9800;
+    font-size:16px;
+    cursor:pointer;
 }
-.status {
-    margin-top: 15px;
-}
+.status { margin-top:15px; }
 </style>
 </head>
 
 <body>
 
-<header>
 <h1>⚔️ ODINVERSE</h1>
-<p>Projet NFT Viking sur MultiversX</p>
-
 <button id="connectBtn">🔐 Connect Wallet</button>
 <div class="status" id="status">❌ Non connecté</div>
 <div class="status" id="address"></div>
-</header>
 
 <script>
-let provider = null;
+let provider;
 
 const statusEl = document.getElementById("status");
 const addressEl = document.getElementById("address");
 const connectBtn = document.getElementById("connectBtn");
 
-connectBtn.addEventListener("click", connectWallet);
+connectBtn.onclick = connectWallet;
 
 async function connectWallet() {
     statusEl.innerText = "🔄 Connexion en cours...";
     addressEl.innerText = "";
 
     try {
-        // ✅ BON test SDK
+        // ✅ BON objet global (le seul valide)
         if (typeof WalletConnectProvider === "undefined") {
             throw new Error("SDK WalletConnect non chargé");
         }
 
-        // 🔑 WalletConnect Project ID (obligatoire)
-        const projectId = "f4f84c031236a02d1fda5167859868f4";
-
-        // 🌐 Bridge officiel
-        const bridge = "https://bridge.walletconnect.org";
-
-        // 🌍 Réseau MultiversX
-        const chainId = "1"; // Mainnet
-
-        provider = new WalletConnectProvider(
-            bridge,
-            { chainId },
-            projectId
-        );
+        provider = new WalletConnectProvider({
+            projectId: "f4f84c031236a02d1fda5167859868f4",
+            chainId: "1", // Mainnet | "T" Testnet
+            relayUrl: "wss://relay.walletconnect.com"
+        });
 
         await provider.init();
 
@@ -86,7 +66,7 @@ async function connectWallet() {
             qrCodeModal: true
         });
 
-        const address = await provider.getAddress();
+        const address = provider.getAddress();
 
         statusEl.innerText = "✅ Wallet connecté";
         addressEl.innerText = "🟢 " + address;
