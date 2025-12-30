@@ -3,31 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viking WalletConnect Test</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/walletConnectProvider.umd.js"></script>
+<title>Odinverse - Mint Viking</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
 <style>
-body { background:#1a1a1a; color:#f5f5dc; font-family: 'Cinzel', serif; text-align:center; }
-.viking-container { margin:auto; margin-top:100px; padding:30px; max-width:400px; background:rgba(0,0,0,0.7); border-radius:15px; }
-#MyWalletConnectQRContainer svg { width:100%; height:auto; }
-button { margin:10px; }
+body {
+    margin:0;
+    padding:0;
+    background: url('https://images.unsplash.com/photo-1602207903760-7ed18e5ee22c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w5MTMyMXwwfDF8c2VhcmNofDF8fHZpa2luZ3xlbnwwfHx8fDE2OTI5MjQwNzI&ixlib=rb-4.0.3&q=80&w=1080') no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Cinzel', serif;
+    color: #f5f5dc;
+    text-align: center;
+}
+.viking-container {
+    background-color: rgba(0,0,0,0.7);
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    margin: 100px auto;
+    box-shadow: 0 0 20px rgba(255,215,0,0.6);
+}
+button {
+    margin: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+#MyWalletConnectQRContainer svg {
+    width: 100%;
+    height: auto;
+    margin-top: 20px;
+}
 </style>
 </head>
 <body>
 
 <div class="viking-container">
-  <h1>⚔️ Viking MultiversX ⚔️</h1>
-  <button id="connectBtn" class="btn btn-warning btn-lg">Connect Wallet</button>
-  <button id="disconnectBtn" class="btn btn-danger btn-lg" style="display:none;">Disconnect</button>
-  <div id="walletInfo">
-    <p id="status">Status: Not connected</p>
-    <p id="address"></p>
-  </div>
-  <div id="MyWalletConnectQRContainer" style="margin-top:20px;"></div>
+    <h1>⚔️ Odinverse Mint ⚔️</h1>
+    <p>Connectez votre wallet pour embarquer dans le raid Viking !</p>
+    <button id="connectBtn" class="btn btn-warning btn-lg">Connect Wallet</button>
+    <button id="disconnectBtn" class="btn btn-danger btn-lg" style="display:none;">Disconnect</button>
+    <div id="walletInfo">
+        <p id="status">Status: Not connected</p>
+        <p id="address"></p>
+    </div>
+    <div id="MyWalletConnectQRContainer"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/walletConnectProvider.umd.js"></script>
 <script>
 const statusEl = document.getElementById("status");
 const addressEl = document.getElementById("address");
@@ -37,50 +62,50 @@ const qrContainer = document.getElementById("MyWalletConnectQRContainer");
 
 let provider = null;
 
-// ⚠️ Remplacez par votre Project ID WalletConnect 2.0
+// 🔑 Remplacez par votre Project ID WalletConnect 2.0
 const projectId = "f4f84c031236a02d1fda5167859868f4"; 
 const relayUrl = "wss://relay.walletconnect.com";
 const chainId = "T"; // Testnet
 
 const callbacks = {
-  onClientLogin: async function () {
-    const address = await provider.getAddress();
-    statusEl.textContent = "Status: Connected";
-    addressEl.textContent = "Address: " + address;
-    connectBtn.style.display = "none";
-    disconnectBtn.style.display = "inline-block";
-    qrContainer.innerHTML = ""; // On enlève le QR code
-  },
-  onClientLogout: async function () {
-    statusEl.textContent = "Status: Not connected";
-    addressEl.textContent = "";
-    connectBtn.style.display = "inline-block";
-    disconnectBtn.style.display = "none";
-  }
+    onClientLogin: async function () {
+        const address = await provider.getAddress();
+        statusEl.textContent = "Status: Connected";
+        addressEl.textContent = "Address: " + address;
+        connectBtn.style.display = "none";
+        disconnectBtn.style.display = "inline-block";
+        qrContainer.innerHTML = "";
+    },
+    onClientLogout: async function () {
+        statusEl.textContent = "Status: Not connected";
+        addressEl.textContent = "";
+        connectBtn.style.display = "inline-block";
+        disconnectBtn.style.display = "none";
+    }
 };
 
 // Instanciation du provider
 provider = new window.WalletConnectV2Provider(callbacks, chainId, relayUrl, projectId);
 
 async function showQR(uri) {
-  const svg = await QRCode.toString(uri, { type: "svg" });
-  qrContainer.innerHTML = svg;
+    const svg = await QRCode.toString(uri, { type: "svg" });
+    qrContainer.innerHTML = svg;
 }
 
 connectBtn.addEventListener("click", async () => {
-  try {
-    await provider.init();
-    const { uri, approval } = await provider.connect();
-    await showQR(uri);
-    await provider.login({ approval });
-  } catch (e) {
-    console.error("Erreur WalletConnect:", e);
-    alert("Erreur WalletConnect : " + e.message);
-  }
+    try {
+        await provider.init();
+        const { uri, approval } = await provider.connect();
+        await showQR(uri);
+        await provider.login({ approval });
+    } catch (e) {
+        console.error("Erreur WalletConnect:", e);
+        alert("Erreur WalletConnect : " + e.message);
+    }
 });
 
 disconnectBtn.addEventListener("click", async () => {
-  await provider.logout();
+    await provider.logout();
 });
 </script>
 </body>
