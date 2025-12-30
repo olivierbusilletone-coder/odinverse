@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viking MultiversX Wallet</title>
+<title>Viking WalletConnect Test</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider/dist/walletConnectProvider.umd.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -24,19 +24,7 @@ button { margin:10px; }
     <p id="status">Status: Not connected</p>
     <p id="address"></p>
   </div>
-</div>
-
-<!-- Modal QR Code -->
-<div class="modal fade" id="MyWalletConnectModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Scan QR Code avec xPortal</h5>
-        <button type="button" class="btn-close" onclick="closeModal()"></button>
-      </div>
-      <div class="modal-body" id="MyWalletConnectQRContainer"></div>
-    </div>
-  </div>
+  <div id="MyWalletConnectQRContainer" style="margin-top:20px;"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -45,21 +33,23 @@ const statusEl = document.getElementById("status");
 const addressEl = document.getElementById("address");
 const connectBtn = document.getElementById("connectBtn");
 const disconnectBtn = document.getElementById("disconnectBtn");
+const qrContainer = document.getElementById("MyWalletConnectQRContainer");
 
 let provider = null;
 
-const projectId = "f4f84c031236a02d1fda5167859868f4"; // ton Project ID WalletConnect
+// ⚠️ Remplacez par votre Project ID WalletConnect 2.0
+const projectId = "f4f84c031236a02d1fda5167859868f4"; 
 const relayUrl = "wss://relay.walletconnect.com";
 const chainId = "T"; // Testnet
 
 const callbacks = {
   onClientLogin: async function () {
-    closeModal();
     const address = await provider.getAddress();
     statusEl.textContent = "Status: Connected";
     addressEl.textContent = "Address: " + address;
     connectBtn.style.display = "none";
     disconnectBtn.style.display = "inline-block";
+    qrContainer.innerHTML = ""; // On enlève le QR code
   },
   onClientLogout: async function () {
     statusEl.textContent = "Status: Not connected";
@@ -69,27 +59,24 @@ const callbacks = {
   }
 };
 
-// ⚡ Utiliser UMD
+// Instanciation du provider
 provider = new window.WalletConnectV2Provider(callbacks, chainId, relayUrl, projectId);
 
-async function openModal(connectorUri) {
-  const svg = await QRCode.toString(connectorUri, { type: "svg" });
-  document.getElementById("MyWalletConnectQRContainer").innerHTML = svg;
-  const myModal = new bootstrap.Modal(document.getElementById('MyWalletConnectModal'));
-  myModal.show();
-}
-
-function closeModal() {
-  const modalEl = document.getElementById('MyWalletConnectModal');
-  const modal = bootstrap.Modal.getInstance(modalEl);
-  if (modal) modal.hide();
+async function showQR(uri) {
+  const svg = await QRCode.toString(uri, { type: "svg" });
+  qrContainer.innerHTML = svg;
 }
 
 connectBtn.addEventListener("click", async () => {
-  await provider.init();
-  const { uri, approval } = await provider.connect();
-  await openModal(uri);
-  await provider.login({ approval });
+  try {
+    await provider.init();
+    const { uri, approval } = await provider.connect();
+    await showQR(uri);
+    await provider.login({ approval });
+  } catch (e) {
+    console.error("Erreur WalletConnect:", e);
+    alert("Erreur WalletConnect : " + e.message);
+  }
 });
 
 disconnectBtn.addEventListener("click", async () => {
