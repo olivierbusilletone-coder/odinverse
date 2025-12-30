@@ -5,65 +5,148 @@
     <title>ODINVERSE — Viking NFT Project</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- SDK DAPP UMD (OBLIGATOIRE) -->
-    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-dapp@2.6.2/out/sdkDapp.umd.js"></script>
+    <!-- ✅ SDK WalletConnect MultiversX (UMD navigateur) -->
+    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
 
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0e0e0e;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        header {
+            padding: 60px 20px;
+            background: linear-gradient(180deg, #1a1a1a, #000);
+        }
+
+        h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 14px 28px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #ff9800;
+            color: #000;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #ffc107;
+        }
+
+        section {
+            padding: 40px 20px;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        footer {
+            padding: 20px;
+            background: #000;
+            opacity: 0.6;
+        }
+    </style>
 </head>
 <body>
 
-<button id="connectBtn">🔐 Connect Wallet</button>
+<header>
+    <h1>⚔️ ODINVERSE</h1>
+    <p>Le projet NFT Viking ultime sur MultiversX</p>
 
-<p id="status">❌ Non connecté</p>
-<p id="address"></p>
+    <button id="connectBtn">🔐 Connect Wallet</button>
+
+    <div class="status" id="status">❌ Non connecté</div>
+    <div class="status" id="address"></div>
+</header>
+
+<section>
+    <h2>🔥 Le Projet</h2>
+    <p>
+        ODINVERSE est une collection NFT inspirée de la mythologie viking.
+        Guerriers, runes, avantages exclusifs et mini-jeux on-chain.
+    </p>
+</section>
+
+<section>
+    <h2>🧠 Avantages</h2>
+    <p>⚔️ Jeux on-chain · 🪙 Airdrops · 🛡️ Avantages partenaires · 🔥 Challenges</p>
+</section>
+
+<section>
+    <h2>💎 Mint</h2>
+    <p>Prix : <strong>0.05 EGLD</strong></p>
+    <button disabled>Mint bientôt disponible</button>
+</section>
+
+<footer>
+    © 2025 ODINVERSE — Built for warriors
+</footer>
 
 <script>
-const {
-    WalletConnectLoginButton,
-    init,
-    logout,
-    getAccount
-} = window.MultiversXSDKDapp;
+/* ================================
+   WALLET CONNECT LOGIC
+================================ */
+
+let provider = null;
+
+const statusEl = document.getElementById("status");
+const addressEl = document.getElementById("address");
+const connectBtn = document.getElementById("connectBtn");
+
+connectBtn.addEventListener("click", connectWallet);
 
 async function connectWallet() {
-    const status = document.getElementById("status");
-    const addressEl = document.getElementById("address");
-
-    status.innerText = "🔄 Connexion en cours...";
-
-    if (!window.MultiversXSDKDapp) {
-        status.innerText = "❌ SDK WalletConnect non chargé";
-        return;
-    }
+    statusEl.innerText = "🔄 Connexion en cours...";
+    addressEl.innerText = "";
 
     try {
-        await init({
-            network: {
-                name: "mainnet",
-                apiAddress: "https://api.multiversx.com",
-                walletConnectV2ProjectId: "multiversx-dapp"
-            }
+        // 🔍 Sécurité : vérifier que le SDK est bien chargé
+        if (typeof WalletConnectProvider === "undefined") {
+            throw new Error("SDK WalletConnect non chargé");
+        }
+
+        // 🔐 Initialisation du provider
+        provider = new WalletConnectProvider({
+            chainId: "1" // Mainnet | "T" Testnet | "D" Devnet
         });
 
-        // 👉 Ouvre le QR WalletConnect
-        const loginResult = await window.MultiversXSDKDapp.walletConnectLogin();
+        // 📲 Génère le QR Code
+        await provider.init();
 
-        if (!loginResult) {
-            status.innerText = "❌ Connexion annulée";
+        // 🔑 Ouvre la fenêtre WalletConnect
+        const connected = await provider.login();
+
+        if (!connected) {
+            statusEl.innerText = "❌ Connexion annulée";
             return;
         }
 
-        const account = getAccount();
-        addressEl.innerText = "🟢 Wallet connecté : " + account.address;
-        status.innerText = "✅ Connexion réussie";
+        // 📬 Adresse wallet
+        const address = await provider.getAddress();
+
+        statusEl.innerText = "✅ Wallet connecté";
+        addressEl.innerText = "🟢 " + address;
+
+        connectBtn.innerText = "🔓 Wallet connecté";
+        connectBtn.disabled = true;
 
     } catch (err) {
-        console.error(err);
-        status.innerText = "❌ Erreur : " + err.message;
+        console.error("Wallet error:", err);
+        statusEl.innerText = "❌ Erreur : " + err.message;
     }
 }
-
-document.getElementById("connectBtn").addEventListener("click", connectWallet);
 </script>
 
 </body>
