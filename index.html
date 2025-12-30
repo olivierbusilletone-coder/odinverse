@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>ODINVERSE — Viking NFT Project</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body { background:#0e0e0e; color:#fff; font-family:Arial,sans-serif; text-align:center; padding:50px;}
 h1 { font-size:42px; margin-bottom:10px;}
@@ -12,47 +11,19 @@ button { padding:14px 28px; font-size:16px; cursor:pointer; border:none; border-
 button:disabled { opacity:0.6; cursor:default; }
 .status { margin-top:15px; font-size:16px; }
 #qr { margin-top:20px; }
-section { padding:40px 20px; }
-footer { padding:20px; background:#000; opacity:0.6; margin-top:40px;}
 </style>
-
 </head>
 <body>
 
-<header>
-    <h1>⚔️ ODINVERSE</h1>
-    <p>Le projet NFT Viking ultime sur MultiversX</p>
+<h1>⚔️ ODINVERSE</h1>
+<p>Le projet NFT Viking ultime sur MultiversX</p>
 
-    <button id="connectBtn">🔐 Connect Wallet</button>
-    <div class="status" id="status">❌ Non connecté</div>
-    <div class="status" id="address"></div>
-    <canvas id="qr"></canvas>
-</header>
+<button id="connectBtn">🔐 Connect Wallet</button>
+<div class="status" id="status">❌ Non connecté</div>
+<div class="status" id="address"></div>
+<canvas id="qr"></canvas>
 
-<section>
-    <h2>🔥 Le Projet</h2>
-    <p>ODINVERSE est une collection NFT inspirée de la mythologie viking. Guerriers, runes, avantages exclusifs et mini-jeux on-chain.</p>
-</section>
-
-<section>
-    <h2>🧠 Avantages</h2>
-    <p>⚔️ Jeux on-chain · 🪙 Airdrops · 🛡️ Avantages partenaires · 🔥 Challenges</p>
-</section>
-
-<section>
-    <h2>💎 Mint</h2>
-    <p>Prix : <strong>0.05 EGLD</strong></p>
-    <button disabled>Mint bientôt disponible</button>
-</section>
-
-<footer>
-    © 2025 ODINVERSE — Built for warriors
-</footer>
-
-<!-- QRCode library -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
-<!-- WalletConnect 2.0 ESM -->
 <script type="module">
 import { WalletConnectProvider } from "https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.6.0/out/index.js";
 
@@ -68,9 +39,9 @@ connectBtn.onclick = async () => {
         statusEl.innerText = "🔄 Connexion en cours...";
         qrCanvas.style.display = "block";
 
-        const projectId = "f4f84c031236a02d1fda5167859868f4"; // Remplace par ton Project ID WalletConnect
+        const projectId = "f4f84c031236a02d1fda5167859868f4";
         const relayUrl = "wss://relay.walletconnect.com";
-        const chainId = "1"; // Mainnet: 1 | Testnet: T | Devnet: D
+        const chainId = "1";
 
         const callbacks = {
             onClientLogin: async () => {
@@ -82,6 +53,7 @@ connectBtn.onclick = async () => {
                 connectBtn.innerText = "🔓 Wallet connecté";
             },
             onClientLogout: () => {
+                qrCanvas.style.display = "none";
                 statusEl.innerText = "❌ Déconnecté";
                 addressEl.innerText = "";
                 connectBtn.disabled = false;
@@ -95,7 +67,6 @@ connectBtn.onclick = async () => {
         await provider.init();
         const { uri, approval } = await provider.connect();
 
-        // Génère QR code
         QRCode.toCanvas(qrCanvas, uri, { width: 220 }, function (err) {
             if (err) console.error(err);
         });
