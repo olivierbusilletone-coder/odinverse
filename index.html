@@ -1,98 +1,49 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>ODINVERSE — Viking NFT Project</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>ODINVERSE — Viking NFT Project</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- ✅ SDK WalletConnect MultiversX (UMD navigateur) -->
-    <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
+<!-- ✅ SDK WalletConnect MultiversX -->
+<script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.4.1/out/walletConnectProvider.umd.js"></script>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0e0e0e;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-        }
-
-        header {
-            padding: 60px 20px;
-            background: linear-gradient(180deg, #1a1a1a, #000);
-        }
-
-        h1 {
-            font-size: 42px;
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 14px 28px;
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            background: #ff9800;
-            color: #000;
-            margin-top: 20px;
-        }
-
-        button:hover {
-            background: #ffc107;
-        }
-
-        section {
-            padding: 40px 20px;
-        }
-
-        .status {
-            margin-top: 20px;
-            font-size: 16px;
-        }
-
-        footer {
-            padding: 20px;
-            background: #000;
-            opacity: 0.6;
-        }
-    </style>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0e0e0e;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+}
+header {
+    padding: 60px 20px;
+    background: linear-gradient(180deg, #1a1a1a, #000);
+}
+button {
+    padding: 14px 28px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: none;
+    background: #ff9800;
+}
+.status {
+    margin-top: 15px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
-    <h1>⚔️ ODINVERSE</h1>
-    <p>Le projet NFT Viking ultime sur MultiversX</p>
+<h1>⚔️ ODINVERSE</h1>
+<p>Projet NFT Viking sur MultiversX</p>
 
-    <button id="connectBtn">🔐 Connect Wallet</button>
-
-    <div class="status" id="status">❌ Non connecté</div>
-    <div class="status" id="address"></div>
+<button id="connectBtn">🔐 Connect Wallet</button>
+<div class="status" id="status">❌ Non connecté</div>
+<div class="status" id="address"></div>
 </header>
-
-<section>
-    <h2>🔥 Le Projet</h2>
-    <p>
-        ODINVERSE est une collection NFT inspirée de la mythologie viking.
-        Guerriers, runes, avantages exclusifs et mini-jeux on-chain.
-    </p>
-</section>
-
-<section>
-    <h2>🧠 Avantages</h2>
-    <p>⚔️ Jeux on-chain · 🪙 Airdrops · 🛡️ Avantages partenaires · 🔥 Challenges</p>
-</section>
-
-<section>
-    <h2>💎 Mint</h2>
-    <p>Prix : <strong>0.05 EGLD</strong></p>
-    <button disabled>Mint bientôt disponible</button>
-</section>
-
-<footer>
-    © 2025 ODINVERSE — Built for warriors
-</footer>
 
 <script>
 let provider = null;
@@ -108,45 +59,39 @@ async function connectWallet() {
     addressEl.innerText = "";
 
     try {
-        // ✅ Vérification SDK
-        if (
-            !window.MultiversXWalletConnectProvider ||
-            !window.MultiversXWalletConnectProvider.WalletConnectProvider
-        ) {
+        // ✅ BON test SDK
+        if (typeof WalletConnectProvider === "undefined") {
             throw new Error("SDK WalletConnect non chargé");
         }
 
-        const WalletConnectProvider =
-            window.MultiversXWalletConnectProvider.WalletConnectProvider;
+        // 🔑 WalletConnect Project ID (obligatoire)
+        const projectId = "f4f84c031236a02d1fda5167859868f4";
 
         // 🌐 Bridge officiel
-        const walletConnectBridge = "https://bridge.walletconnect.org";
+        const bridge = "https://bridge.walletconnect.org";
 
-        // 🌍 Réseau
-        const chainId = "1"; // Mainnet | "T" Testnet | "D" Devnet
+        // 🌍 Réseau MultiversX
+        const chainId = "1"; // Mainnet
 
-        // 🔐 Création provider
-        provider = new WalletConnectProvider(walletConnectBridge, {
-            chainId: chainId
-        });
+        provider = new WalletConnectProvider(
+            bridge,
+            { chainId },
+            projectId
+        );
 
-        // 📲 Init WalletConnect
         await provider.init();
 
-        // 📸 Callback QR Code (OBLIGATOIRE)
         await provider.login({
             callbackUrl: window.location.href,
             qrCodeModal: true
         });
 
-        // 📬 Adresse wallet
         const address = await provider.getAddress();
 
         statusEl.innerText = "✅ Wallet connecté";
         addressEl.innerText = "🟢 " + address;
-
-        connectBtn.innerText = "🔓 Wallet connecté";
         connectBtn.disabled = true;
+        connectBtn.innerText = "🔓 Wallet connecté";
 
     } catch (err) {
         console.error(err);
@@ -154,7 +99,6 @@ async function connectWallet() {
     }
 }
 </script>
-
 
 </body>
 </html>
