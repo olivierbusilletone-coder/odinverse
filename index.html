@@ -5,11 +5,6 @@
 <title>ODINVERSE — Viking NFT Project</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- WalletConnectProvider UMD -->
-<script src="dist/walletConnectProvider.umd.js"></script>
-<!-- QRCode -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-
 <style>
 body { background:#0e0e0e; color:#fff; font-family:Arial,sans-serif; text-align:center; padding:50px;}
 h1 { font-size:42px; margin-bottom:10px;}
@@ -20,6 +15,7 @@ button:disabled { opacity:0.6; cursor:default; }
 section { padding:40px 20px; }
 footer { padding:20px; background:#000; opacity:0.6; margin-top:40px;}
 </style>
+
 </head>
 <body>
 
@@ -53,7 +49,13 @@ footer { padding:20px; background:#000; opacity:0.6; margin-top:40px;}
     © 2025 ODINVERSE — Built for warriors
 </footer>
 
-<script>
+<!-- QRCode library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<!-- WalletConnect 2.0 ESM -->
+<script type="module">
+import { WalletConnectProvider } from "https://cdn.jsdelivr.net/npm/@multiversx/sdk-wallet-connect-provider@2.6.0/out/index.js";
+
 const connectBtn = document.getElementById("connectBtn");
 const statusEl = document.getElementById("status");
 const addressEl = document.getElementById("address");
@@ -88,7 +90,6 @@ connectBtn.onclick = async () => {
             onClientEvent: e => console.log("WalletConnect Event:", e)
         };
 
-        const WalletConnectProvider = window.MultiversXWalletConnectProvider.WalletConnectProvider;
         provider = new WalletConnectProvider(callbacks, chainId, relayUrl, projectId);
 
         await provider.init();
