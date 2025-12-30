@@ -48,14 +48,20 @@ async function connectWallet() {
     addressEl.innerText = "";
 
     try {
-        // ✅ BON objet global (le seul valide)
-        if (typeof WalletConnectProvider === "undefined") {
+        // ✅ BON objet global (réel)
+        if (
+            !window.multiversxSdkWalletConnectProvider ||
+            !window.multiversxSdkWalletConnectProvider.WalletConnectProvider
+        ) {
             throw new Error("SDK WalletConnect non chargé");
         }
 
+        const WalletConnectProvider =
+            window.multiversxSdkWalletConnectProvider.WalletConnectProvider;
+
         provider = new WalletConnectProvider({
-            projectId: "f4f84c031236a02d1fda5167859868f4",
-            chainId: "1", // Mainnet | "T" Testnet
+            projectId: "TON_PROJECT_ID_ICI",
+            chainId: "1", // Mainnet
             relayUrl: "wss://relay.walletconnect.com"
         });
 
@@ -70,8 +76,8 @@ async function connectWallet() {
 
         statusEl.innerText = "✅ Wallet connecté";
         addressEl.innerText = "🟢 " + address;
-        connectBtn.disabled = true;
         connectBtn.innerText = "🔓 Wallet connecté";
+        connectBtn.disabled = true;
 
     } catch (err) {
         console.error(err);
@@ -79,6 +85,7 @@ async function connectWallet() {
     }
 }
 </script>
+
 
 </body>
 </html>
