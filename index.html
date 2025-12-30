@@ -5,57 +5,93 @@
 <title>ODINVERSE — Connect Wallet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- QRCode lib (npm CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<!-- WalletConnect Provider UMD via SDK Dapp -->
 <script src="https://cdn.jsdelivr.net/npm/@multiversx/sdk-dapp@latest/dist/sdk-dapp.umd.js"></script>
+
 <style>
 body { background:#0e0e0e; color:#fff; font-family:Arial, sans-serif; text-align:center; padding:50px;}
 button { padding:14px 28px; font-size:16px; border:none; border-radius:8px; background:#ff9800; cursor:pointer;}
+button:disabled { opacity:0.6; cursor:default; }
 .status { margin-top:15px; font-size:16px; }
+#qr { margin-top:20px; }
 </style>
 </head>
 <body>
 
 <h1>⚔️ ODINVERSE</h1>
+<p>Le projet NFT Viking ultime sur MultiversX</p>
+
 <button id="connectBtn">🔐 Connect Wallet</button>
 <p class="status" id="status">❌ Non connecté</p>
 <p class="status" id="address"></p>
+<canvas id="qr"></canvas>
 
 <script>
 const connectBtn = document.getElementById("connectBtn");
 const statusEl = document.getElementById("status");
 const addressEl = document.getElementById("address");
+const qrCanvas = document.getElementById("qr");
 
-let walletProvider;
+let provider;
 
 connectBtn.onclick = async () => {
     try {
         statusEl.innerText = "🔄 Connexion en cours...";
         addressEl.innerText = "";
+        qrCanvas.style.display = "block";
 
         const { init, getWalletConnectProvider, getAccount } = window.mvxSdkDapp;
 
-        await init({ environment: "mainnet" }); // testnet/devnet/mainnet
+        // ⚡ Initialisation SDK Dapp
+        await init({ environment: "mainnet" }); // "T"=Testnet, "D"=Devnet, "1"=Mainnet
 
-        walletProvider = getWalletConnectProvider({
-            projectId: "f4f84c031236a02d1fda5167859868f4", // remplace par ton Project ID WalletConnect
-            chain: "1", // Mainnet
-            relayUrl: "wss://relay.walletconnect.com"
+        // 🔐 Configuration WalletConnect V2
+        const projectId = "f4f84c031236a02d1fda5167859868f4"; // Remplace par ton Project ID WalletConnect
+        const relayUrl = "wss://relay.walletconnect.com";
+        const chainId = "1"; // Mainnet
+
+        const callbacks = {
+            onClientLogin: async () => {
+                qrCanvas.style.display = "none";
+                const address = await provider.getAddress();
+                statusEl.innerText = "✅ Wallet connecté";
+                addressEl.innerText = "🟢 " + address;
+                connectBtn.disabled = true;
+                connectBtn.innerText = "🔓 Wallet connecté";
+            },
+            onClientLogout: async () => {
+                statusEl.innerText = "❌ Déconnecté";
+                addressEl.innerText = "";
+                connectBtn.disabled = false;
+                connectBtn.innerText = "🔐 Connect Wallet";
+            },
+            onClientEvent: (event) => {
+                console.log("WalletConnect Event:", event);
+            }
+        };
+
+        // 🔧 Création provider
+        provider = getWalletConnectProvider({
+            projectId,
+            chain: chainId,
+            relayUrl,
+            callbacks
         });
 
-        await walletProvider.init();
-        await walletProvider.connect();
+        await provider.init();
 
-        // Attendre que l'utilisateur confirme
-        setTimeout(() => {
-            const account = getAccount();
-            if (!account || !account.address) {
-                statusEl.innerText = "❌ Connexion échouée";
-                return;
-            }
-            statusEl.innerText = "✅ Wallet connecté";
-            addressEl.innerText = "🟢 " + account.address;
-            connectBtn.disabled = true;
-            connectBtn.innerText = "🔓 Wallet connecté";
-        }, 1000);
+        // 📲 Connexion
+        const { uri, approval } = await provider.connect();
+
+        // 🎨 Générer QR code
+        QRCode.toCanvas(qrCanvas, uri, function (error) {
+            if (error) console.error(error);
+        });
+
+        // ⏳ Attendre que l'utilisateur confirme le wallet
+        await provider.login({ approval });
 
     } catch (err) {
         console.error(err);
