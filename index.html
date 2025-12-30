@@ -95,10 +95,6 @@
 </footer>
 
 <script>
-/* ================================
-   WALLET CONNECT LOGIC
-================================ */
-
 let provider = null;
 
 const statusEl = document.getElementById("status");
@@ -112,26 +108,36 @@ async function connectWallet() {
     addressEl.innerText = "";
 
     try {
-        // 🔍 Sécurité : vérifier que le SDK est bien chargé
-        if (typeof WalletConnectProvider === "undefined") {
+        // ✅ Vérification SDK
+        if (
+            !window.MultiversXWalletConnectProvider ||
+            !window.MultiversXWalletConnectProvider.WalletConnectProvider
+        ) {
             throw new Error("SDK WalletConnect non chargé");
         }
 
-        // 🔐 Initialisation du provider
-        provider = new WalletConnectProvider({
-            chainId: "1" // Mainnet | "T" Testnet | "D" Devnet
+        const WalletConnectProvider =
+            window.MultiversXWalletConnectProvider.WalletConnectProvider;
+
+        // 🌐 Bridge officiel
+        const walletConnectBridge = "https://bridge.walletconnect.org";
+
+        // 🌍 Réseau
+        const chainId = "1"; // Mainnet | "T" Testnet | "D" Devnet
+
+        // 🔐 Création provider
+        provider = new WalletConnectProvider(walletConnectBridge, {
+            chainId: chainId
         });
 
-        // 📲 Génère le QR Code
+        // 📲 Init WalletConnect
         await provider.init();
 
-        // 🔑 Ouvre la fenêtre WalletConnect
-        const connected = await provider.login();
-
-        if (!connected) {
-            statusEl.innerText = "❌ Connexion annulée";
-            return;
-        }
+        // 📸 Callback QR Code (OBLIGATOIRE)
+        await provider.login({
+            callbackUrl: window.location.href,
+            qrCodeModal: true
+        });
 
         // 📬 Adresse wallet
         const address = await provider.getAddress();
@@ -143,11 +149,12 @@ async function connectWallet() {
         connectBtn.disabled = true;
 
     } catch (err) {
-        console.error("Wallet error:", err);
+        console.error(err);
         statusEl.innerText = "❌ Erreur : " + err.message;
     }
 }
 </script>
+
 
 </body>
 </html>
