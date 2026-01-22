@@ -2156,11 +2156,11 @@ footer a:visited {
 .combat-hint {
   margin-bottom: 12px;
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-family: 'Cinzel', serif;
   letter-spacing: 0.08em;
 
-  color: #7dffb2;
+  color: #ffd700;
   opacity: 0.85;
 }
 
@@ -2315,10 +2315,10 @@ footer a:visited {
 
 /* ================= VS ================= */
 .combat-vs {
-  font-size: 32px;
+  font-size: 42px;
   font-weight: bold;
   font-family: 'Cinzel', serif;
-  color: #7dffb2;
+  color: #ffd700;
   text-shadow: 0 0 10px rgba(125, 255, 178, 0.6);
 }
 
@@ -2561,12 +2561,15 @@ footer a:visited {
 /* Rangs spéciaux pour les 3 premiers */
 .combat-stats td.rank-1::before {
   content: "🥇 ";
+  font-size: 1.4em;
 }
 .combat-stats td.rank-2::before {
   content: "🥈 ";
+  font-size: 1.3em;
 }
 .combat-stats td.rank-3::before {
   content: "🥉 ";
+  font-size: 1.2em;
 }
 
 /* Effet “chips” pour chaque ligne */
@@ -2580,9 +2583,22 @@ footer a:visited {
   background-color: transparent;
 }
 
+/* 🔒 Arène désactivée */
+.combat-arena.arena-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(100%);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Optionnel : bouton visuellement bloqué */
+.combat-arena.arena-disabled .combat-start-btn {
+  background: #555;
+  cursor: not-allowed;
+}
 
 </style>
-  <script type="module" crossorigin src="./assets/index-00edd3dd.js"></script>
+  <script type="module" crossorigin src="./assets/index-9ecce0b3.js"></script>
 </head>
 
 <body>
@@ -2774,7 +2790,7 @@ footer a:visited {
 >
   <div class="nft-section combat-section">
 
-    <h2 class="section-title-white">⚔️ Combat Arena</h2>
+    <h2 class="section-title-white-connect">⚔️ Combat Arena</h2>
 
     <!-- ÉTAPE 1 : Sélection -->
     <div id="combatSelect">
