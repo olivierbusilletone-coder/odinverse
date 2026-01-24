@@ -1,5 +1,0 @@
-nom base : elcia_base_neom31560_reseau
-port : 5432
-ip : 192.168.10.101
-login : NEOM31560
-pass : NEOM31560
