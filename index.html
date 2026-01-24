@@ -487,7 +487,7 @@ html, body {
 /* 🔒 TAILLE FIXE POUR TOUTES LES CARTES */
 .nft-card {
   width: 100%;
-  height: 190px;
+  height: 210px;
 
   background: rgba(0, 0, 0, 0.45);
   border-radius: 14px;
@@ -562,6 +562,24 @@ html, body {
   letter-spacing: 0.06em;
 }
 
+.nft-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-family: 'Cinzel', serif;
+}
+
+.nft-category {
+  white-space: normal; /* pour que le texte puisse aller à la ligne si nécessaire */
+}
+
+.nft-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 
 /* ================= MODAL ================= */
@@ -2178,7 +2196,7 @@ footer a:visited {
   );
 
   border-radius: 18px;
-  max-height: calc(2 * 180px + 16px);
+  max-height: calc(2 * 210px + 16px);
   overflow-y: auto;
 
   backdrop-filter: blur(12px);
@@ -2188,7 +2206,7 @@ footer a:visited {
 /* ================= CARD ================= */
 .combat-nft-item {
   width: 100%;
-  height: 180px;
+  height: 200px;
 
   background: rgba(0, 0, 0, 0.45);
   border-radius: 14px;
@@ -2598,7 +2616,7 @@ footer a:visited {
 }
 
 </style>
-  <script type="module" crossorigin src="./assets/index-650be2e3.js"></script>
+  <script type="module" crossorigin src="./assets/index-5b1930da.js"></script>
 </head>
 
 <body>
@@ -2648,7 +2666,7 @@ footer a:visited {
 <section class="odins-preview" id="odinsPreview">
   <div class="odins-row" id="odinsRow"></div>
 </section>
-
+<br><br>
 <div class="wallet-balances"></div> 
  
 <div class="wallet-box">
@@ -2737,7 +2755,7 @@ footer a:visited {
     ⚔️ Combat
   </button>
 </div>
-
+<br>
 
 <div id="mainTabContents">
 
@@ -2747,7 +2765,7 @@ footer a:visited {
     <!-- SECTION ODINS -->
     <div class="nft-section" id="nftSectionOdins">
       <h2 class="section-title-white-connect">Odins'Deck NFT(s)</h2>
-
+<br><br>
       <div class="odins-recap">
         <div class="odins-count">
           Total NFT : <span id="odinsCount">0</span>
@@ -2762,13 +2780,14 @@ footer a:visited {
     <!-- 🏆 TOP HOLDERS -->
     <div class="nft-section" id="topHoldersDeck">
       <h2 class="section-title-white-connect">🏆 Top Holders</h2>
+	  <br><br>
       <div class="top-holders-list" id="topHoldersList"></div>
     </div>
-
+    
     <!-- OTHER NFT -->
     <div class="nft-section" id="nftSectionOthers">
       <h2 class="section-title-white-connect">Other NFT(s)</h2>
-
+      <br><br>
       <input
         type="text"
         id="otherNftSearch"
@@ -2790,12 +2809,11 @@ footer a:visited {
 >
   <div class="nft-section combat-section">
 
-    <h2 class="section-title-white-connect">⚔️ Combat Arena</h2>
-
+    <h2 class="section-title-white-connect">🛡️ Arena Of The Immortals 🛡️</h2>
+<br><br>
     <!-- ÉTAPE 1 : Sélection -->
     <div id="combatSelect">
       <p class="combat-hint">Select your Odin</p>
-
       <div id="combatNftList" class="combat-nft-list">
         <!-- NFTs injectés en JS -->
       </div>
