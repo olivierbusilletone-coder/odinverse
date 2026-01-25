@@ -2321,8 +2321,8 @@ footer a:visited {
 
 /* ================= SLOT ================= */
 .combat-card-slot {
-  width: 190px;
-  height: 260px;
+  width: 210px;
+  height: 310px;
 
   background: rgba(0, 0, 0, 0.45);
   border-radius: 14px;
@@ -2451,19 +2451,24 @@ footer a:visited {
 .combat-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(
-    circle,
-    rgba(0,0,0,0.75),
-    rgba(0,0,0,0.95)
-  );
+
+  background:
+    radial-gradient(circle at center,
+      rgba(255,255,255,0.08),
+      rgba(0,0,0,0.92)
+    );
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
 
+  z-index: 9999;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.35s ease;
 }
 
 .combat-overlay.active {
@@ -2471,18 +2476,18 @@ footer a:visited {
   pointer-events: all;
 }
 
+
 /* ================= TEXTE ================= */
 .combat-overlay-text {
   font-family: 'Cinzel', serif;
-  font-size: clamp(24px, 8vw, 80px);
-  letter-spacing: 0.12em;
-  text-align: center;
+  font-size: clamp(18px, 7vw, 48px);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
+  text-align: center;
 
   opacity: 0;
-  transform: scale(0.3) translateY(40px);
+  transform: scale(0.85);
 }
-
 /* ================= VICTORY ================= */
 .combat-overlay-text.win {
   color: #7dffb2;
@@ -2491,55 +2496,79 @@ footer a:visited {
     0 0 40px rgba(125,255,178,0.6);
   animation: victoryAnim 2.5s ease forwards;
 }
+.combat-overlay-text.pending {
+  color: #ffd700;
 
-/* ================= DEFEAT ================= */
-.combat-overlay-text.lose {
-  color: #ff5555;
+  opacity: 1;
+  animation: fatePulse 1.1s ease-in-out infinite;
+
   text-shadow:
-    0 0 20px rgba(255,85,85,0.8),
-    0 0 40px rgba(255,85,85,0.6);
-  animation: defeatAnim 2.5s ease forwards;
+    0 0 12px rgba(255,215,0,0.6),
+    0 0 30px rgba(255,215,0,0.4);
 }
 
-/* ================= ANIMATIONS ================= */
-@keyframes victoryAnim {
+@keyframes fatePulse {
+  0%   { transform: scale(0.96); opacity: 0.7; }
+  50%  { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(0.96); opacity: 0.7; }
+}
+
+.combat-overlay-text.win {
+  color: #7dffb2;
+
+  opacity: 1;
+  animation: victoryGloss 2.2s ease forwards;
+
+  text-shadow:
+    0 0 18px rgba(125,255,178,0.9),
+    0 0 50px rgba(125,255,178,0.6),
+    0 0 90px rgba(125,255,178,0.35);
+}
+
+@keyframes victoryGloss {
   0% {
     opacity: 0;
-    transform: scale(0.3) translateY(40px);
+    transform: scale(0.4) translateY(30px);
   }
   40% {
     opacity: 1;
-    transform: scale(1.2) translateY(0);
+    transform: scale(1.25);
   }
   70% {
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(0.9) translateY(-20px);
+    transform: scale(0.95) translateY(-20px);
   }
 }
 
-@keyframes defeatAnim {
+.combat-overlay-text.lose {
+  color: #ff5555;
+
+  opacity: 1;
+  animation: defeatGloss 2.2s ease forwards;
+
+  text-shadow:
+    0 0 18px rgba(255,85,85,0.9),
+    0 0 45px rgba(255,85,85,0.6),
+    0 0 80px rgba(255,85,85,0.35);
+}
+
+@keyframes defeatGloss {
   0% {
     opacity: 0;
-    transform: scale(0.3) translateY(40px);
+    transform: scale(0.4);
   }
-  30% {
+  35% {
     opacity: 1;
-    transform: scale(1.1);
+    transform: scale(1.15);
   }
   50% {
     transform: translateX(-10px);
   }
-  60% {
+  65% {
     transform: translateX(10px);
-  }
-  70% {
-    transform: translateX(-6px);
-  }
-  80% {
-    transform: translateX(6px);
   }
   100% {
     opacity: 0;
@@ -2635,8 +2664,46 @@ footer a:visited {
   cursor: not-allowed;
 }
 
+
+
+/* ===== CATEGORY BADGE ===== */
+.category-badge {
+  margin-top: 6px;
+  padding: 4px 10px;
+
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffd700;
+
+  display: inline-block;
+}
+
+/* ===== CATEGORY GLOWS ===== */
+.badge-strength      { box-shadow: 0 0 12px rgba(255, 80, 80, .9); }
+.badge-resilience    { box-shadow: 0 0 12px rgba(120, 180, 255, .9); }
+.badge-darkness      { box-shadow: 0 0 14px rgba(120, 0, 160, .9); }
+.badge-command       { box-shadow: 0 0 14px rgba(255, 215, 0, .95); }
+.badge-nature        { box-shadow: 0 0 12px rgba(80, 200, 120, .9); }
+.badge-agility       { box-shadow: 0 0 12px rgba(100, 255, 200, .9); }
+.badge-technology    { box-shadow: 0 0 12px rgba(100, 200, 255, .9); }
+.badge-magic         { box-shadow: 0 0 16px rgba(200, 120, 255, .95); }
+.badge-monster       { box-shadow: 0 0 16px rgba(255, 80, 0, .95); }
+.badge-light         { box-shadow: 0 0 16px rgba(255, 240, 160, 1); }
+.badge-chaos         { box-shadow: 0 0 18px rgba(255, 60, 60, 1); }
+.badge-knowledge     { box-shadow: 0 0 12px rgba(120, 160, 255, .9); }
+.badge-awareness     { box-shadow: 0 0 12px rgba(255, 255, 255, .9); }
+.badge-stealth       { box-shadow: 0 0 12px rgba(80, 80, 80, .9); }
+.badge-craftsmanship { box-shadow: 0 0 12px rgba(255, 170, 80, .9); }
+
+
+
 </style>
-  <script type="module" crossorigin src="./assets/index-8a21fe31.js"></script>
+  <script type="module" crossorigin src="./assets/index-56c70e95.js"></script>
 </head>
 
 <body>
@@ -2847,7 +2914,7 @@ footer a:visited {
         <div class="combat-vs">VS</div>
         <div id="enemyCard" class="combat-card-slot"></div>
       </div>
-
+<br>
       <button
         id="startCombatBtn"
         class="combat-start-btn"
