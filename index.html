@@ -2447,18 +2447,21 @@ footer a:visited {
 
   border: 1px solid rgba(125, 255, 178, 0.5);
 }
+
+
 /* ================= OVERLAY ================= */
 .combat-overlay {
   position: fixed;
   inset: 0;
 
-  background: radial-gradient(circle at center,
-    rgba(255,255,255,0.08),
-    rgba(0,0,0,0.92)
+  background: radial-gradient(
+    circle at center,
+    rgba(255,255,255,0.05),
+    rgba(0,0,0,0.94)
   );
 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
   display: flex;
   align-items: center;
@@ -2475,198 +2478,207 @@ footer a:visited {
   pointer-events: all;
 }
 
-/* ================= TEXTE ================= */
+/* ================= TEXTE BASE ================= */
 .combat-overlay-text {
   font-family: 'Cinzel', serif;
-  font-size: clamp(22px, 6vw, 52px);
-  letter-spacing: 0.16em;
+  font-size: clamp(22px, 6vw, 62px);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   text-align: center;
+
+  color: #e6c97a; /* or viking */
+  opacity: 0;
 
   transform-style: preserve-3d;
   perspective: 800px;
 
-  color: #ffd700;
-  position: relative;
-}
-
-.combat-overlay-text.pending-3d {
-  animation: fate3D 2.2s ease-in-out infinite;
   text-shadow:
-    0 0 12px rgba(255,215,0,0.35),
-    0 0 32px rgba(255,180,80,0.25);
+    0 0 6px rgba(230,201,122,0.25),
+    0 0 18px rgba(180,140,60,0.15);
 }
 
-.combat-overlay-text.pending-3d::after {
+/* ================= SUSPENSE ================= */
+.combat-overlay-text.pending-3d {
+  opacity: 1;
+  animation: fateGlow 2.8s ease-in-out infinite;
+
+  text-shadow:
+    0 0 8px rgba(230,201,122,0.35),
+    0 0 22px rgba(180,140,60,0.25),
+    0 0 44px rgba(120,80,20,0.18);
+}
+
+@keyframes fateGlow {
+  0% {
+    transform: scale(0.98);
+    filter: brightness(0.85);
+  }
+  50% {
+    transform: scale(1.02);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: scale(0.98);
+    filter: brightness(0.85);
+  }
+}
+
+/* ================= VICTORY ================= */
+/* ================= VICTORY ================= */
+.combat-overlay-text.win {
+  opacity: 1;
+  color: #9cffc8; /* vert clair noble */
+
+  text-shadow:
+    0 0 6px rgba(156,255,200,0.35),
+    0 0 18px rgba(90,180,140,0.22);
+
+  animation: victoryAscension 2.1s cubic-bezier(.2,.7,.2,1) forwards;
+  transform-origin: center;
+}
+
+/* Halo noble subtil */
+.combat-overlay-text.win::after {
   content: "";
   position: absolute;
-  inset: -20%;
-  background: linear-gradient(
-    120deg,
-    transparent 30%,
-    rgba(255,215,120,0.35) 50%,
-    transparent 70%
+  inset: -25%;
+  background: radial-gradient(
+    circle,
+    rgba(180,255,220,0.18),
+    transparent 85%
   );
-  transform: translateX(-120%);
-  animation: glossSweep 2.2s linear infinite;
+  opacity: 0;
+  animation: victoryAura 2.1s ease forwards;
   pointer-events: none;
 }
 
-@keyframes fate3D {
+@keyframes victoryAura {
+  0%   { opacity: 0; }
+  35%  { opacity: 0.35; }
+  70%  { opacity: 0.18; }
+  100% { opacity: 0; }
+}
+
+/* ================= ANIMATION ================= */
+@keyframes victoryAscension {
+  /* arrivée calme */
   0% {
-    opacity: 0.7;
-    transform: translateZ(0) rotateX(12deg) rotateY(-10deg) scale(0.95);
+    opacity: 0;
+    transform:
+      translateY(28px)
+      scale(0.92)
+      rotateX(10deg);
     filter: brightness(0.9);
   }
-  50% {
-    opacity: 1;
-    transform: translateZ(60px) rotateX(-8deg) rotateY(10deg) scale(1.08);
-    filter: brightness(1.25);
-  }
-  100% {
-    opacity: 0.7;
-    transform: translateZ(0) rotateX(12deg) rotateY(-10deg) scale(0.95);
-    filter: brightness(0.9);
-  }
-}
 
-@keyframes glossSweep {
-  to { transform: translateX(120%); }
-}
-
-/* ================= IMPACT TEXTE ================= */
-.combat-overlay-text.camera-impact {
-  animation: cameraImpactText 0.52s cubic-bezier(.2,.8,.2,1);
-}
-
-@keyframes cameraImpactText {
-  0%   { transform: scale(1) rotateX(0) rotateY(0) translateZ(0); }
-  20%  { transform: scale(1.18) rotateX(-8deg) rotateY(6deg) translateZ(40px); }
-  40%  { transform: scale(0.96) rotateX(4deg) rotateY(-4deg) translateZ(-20px); }
-  65%  { transform: scale(1.05) rotateX(-2deg) rotateY(2deg) translateZ(20px); }
-  100% { transform: scale(1) rotateX(0) rotateY(0) translateZ(0); }
-}
-
-/* ================= VICTORY / DEFEAT ================= */
-.combat-overlay-text.win {
-  color: #7dffb2;
-  text-shadow:
-    0 0 20px rgba(125,255,178,0.8),
-    0 0 40px rgba(125,255,178,0.6);
-  animation: victoryGloss 4s ease forwards;
-}
-
-.combat-overlay-text.lose {
-  color: #ff5555;
-  text-shadow:
-    0 0 20px rgba(255,85,85,0.8),
-    0 0 40px rgba(255,85,85,0.6);
-  animation: defeatGloss 4s ease forwards;
-}
-
-@keyframes victoryGloss {
-  0% { opacity: 0; transform: scale(0.4) translateY(30px); }
-  40% { opacity: 1; transform: scale(1.25); }
-  70% { transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.95) translateY(-20px); }
-}
-
-@keyframes defeatGloss {
-  0% { opacity: 0; transform: scale(0.4); }
-  35% { opacity: 1; transform: scale(1.15); }
-  50% { transform: translateX(-10px); }
-  65% { transform: translateX(10px); }
-  100% { opacity: 0; transform: scale(0.9); }
-}
-
-
-/* ================= VICTORY ================= */
-.combat-overlay-text.win {
-  color: #7dffb2;
-  text-shadow:
-    0 0 20px rgba(125,255,178,0.8),
-    0 0 40px rgba(125,255,178,0.6);
-  animation: victoryAnim 1.5s ease forwards;
-}
-.combat-overlay-text.pending {
-  color: #ffd700;
-
-  opacity: 1;
-  animation: fatePulse 2.1s ease-in-out infinite;
-
-  text-shadow:
-    0 0 12px rgba(255,215,0,0.6),
-    0 0 30px rgba(255,215,0,0.4);
-}
-
-@keyframes fatePulse {
-  0%   { transform: scale(0.96); opacity: 0.7; }
-  50%  { transform: scale(1.02); opacity: 1; }
-  100% { transform: scale(0.96); opacity: 0.7; }
-}
-
-.combat-overlay-text.win {
-  color: #7dffb2;
-
-  opacity: 1;
-  animation: victoryGloss 3.2s ease forwards;
-
-  text-shadow:
-    0 0 18px rgba(125,255,178,0.9),
-    0 0 50px rgba(125,255,178,0.6),
-    0 0 90px rgba(125,255,178,0.35);
-}
-
-@keyframes victoryGloss {
-  0% {
-    opacity: 0;
-    transform: scale(0.4) translateY(30px);
-  }
-  40% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-  70% {
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-  }
-}
-
-.combat-overlay-text.lose {
-  color: #ff5555;
-
-  opacity: 1;
-  animation: defeatGloss 3.2s ease forwards;
-
-  text-shadow:
-    0 0 18px rgba(255,85,85,0.9),
-    0 0 45px rgba(255,85,85,0.6),
-    0 0 80px rgba(255,85,85,0.35);
-}
-
-@keyframes defeatGloss {
-  0% {
-    opacity: 0;
-    transform: scale(0.4);
-  }
+  /* élévation */
   35% {
     opacity: 1;
-    transform: scale(1.15);
+    transform:
+      translateY(-8px)
+      scale(1.06)
+      rotateX(-3deg);
+    filter: brightness(1.15);
   }
-  50% {
-    transform: translateX(-10px);
+
+  /* stabilisation noble */
+  70% {
+    transform:
+      translateY(0)
+      scale(1)
+      rotateX(0deg);
+    filter: brightness(1.05);
   }
-  65% {
-    transform: translateX(10px);
-  }
+
+  /* tenue majestueuse */
   100% {
-    opacity: 0;
-    transform: scale(0.9);
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
   }
 }
+
+
+
+/* ================= DEFEAT ================= */
+.combat-overlay-text.lose {
+  opacity: 1;
+  color: #ff6a6a;
+
+  text-shadow:
+    0 0 6px rgba(255,90,90,0.35),
+    0 0 18px rgba(160,40,40,0.25);
+
+  animation: defeatFracture 2.2s cubic-bezier(.3,.1,.2,1) forwards;
+  transform-origin: center;
+}
+
+/* ✂️ Ligne de fracture subtile */
+.combat-overlay-text.lose::after {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  background: linear-gradient(
+    120deg,
+    transparent 45%,
+    rgba(255,255,255,0.15) 50%,
+    transparent 55%
+  );
+  opacity: 0;
+  animation: fractureFlash 2.2s ease forwards;
+  pointer-events: none;
+}
+
+@keyframes fractureFlash {
+  0%   { opacity: 0; }
+  25%  { opacity: 0.25; }
+  40%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* ================= ANIMATION ================= */
+@keyframes defeatFracture {
+  /* apparition lourde */
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: brightness(1.15);
+  }
+
+  /* impact */
+  22% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+
+  /* instabilité / fracture */
+  38% {
+    transform: translateX(-10px) rotateZ(-1.5deg);
+  }
+
+  48% {
+    transform: translateX(10px) rotateZ(1.5deg);
+  }
+
+  58% {
+    transform: translateX(-6px) rotateZ(-0.8deg);
+  }
+
+  /* gravité qui tire vers le bas */
+  75% {
+    transform: translateY(14px) scale(0.96);
+    filter: brightness(0.9);
+  }
+
+  /* écrasement final */
+  100% {
+    opacity: 1;
+    transform: translateY(28px) scale(0.88);
+    filter: brightness(0.75);
+  }
+}
+
+
 
 /* ================= FIN COMBAT ================= */
 
@@ -2795,7 +2807,7 @@ footer a:visited {
 
 
 </style>
-  <script type="module" crossorigin src="./assets/index-8b7dee7d.js"></script>
+  <script type="module" crossorigin src="./assets/index-bea29fb1.js"></script>
 </head>
 
 <body>
