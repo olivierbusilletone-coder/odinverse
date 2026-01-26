@@ -2756,89 +2756,150 @@ footer a:visited {
 /* ================= FIN COMBAT ================= */
 
 .combat-stats {
-  margin-top: 25px;
+  margin: 24px auto 0;
+  padding: 14px 12px;
+
+  max-width: 760px;
+  width: 100%;
+
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 15px;
-  max-width: 760px; /* un peu plus large pour Rank */
-  margin-left: auto;
-  margin-right: auto;
+  border-radius: 14px;
+
   font-family: 'Cinzel', serif;
 }
 
+/* ================= TITLE ================= */
+
 .combat-stats h3 {
   text-align: center;
-  margin-bottom: 10px;
-  font-size: 16px;
+  margin-bottom: 12px;
+
+  font-size: clamp(0.9rem, 4vw, 1.1rem);
+  letter-spacing: 0.18em;
+
   color: #ffd700;
+
+  text-shadow:
+    0 0 6px rgba(255, 215, 100, 0.35);
 }
+
+/* ================= TABLE WRAPPER ================= */
+/* 📱 permet scroll horizontal propre si besoin */
+
+.combat-stats {
+  overflow-x: auto;
+}
+
+/* ================= TABLE ================= */
 
 .combat-stats table {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+
+  font-size: clamp(0.7rem, 3vw, 0.85rem);
+  min-width: 520px; /* 📱 évite écrasement */
 }
+
+/* ================= CELLS ================= */
 
 .combat-stats th,
 .combat-stats td {
-  padding: 6px;
+  padding: 6px 8px;
   text-align: center;
+  white-space: nowrap;
 }
+
+/* ================= HEADER ================= */
 
 .combat-stats th {
   color: #7dffb2;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   font-weight: normal;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
 }
+
+/* ================= BODY ================= */
 
 .combat-stats td {
   color: #fff;
 }
 
-.combat-stats tr.current-user {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  font-weight: bold;
+/* ================= ROW ================= */
+
+.combat-stats tr {
+  border-radius: 8px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-/* Rangs spéciaux pour les 3 premiers */
+@media (hover: hover) {
+  .combat-stats tr:hover {
+    transform: scale(1.02);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+}
+
+/* ================= CURRENT USER ================= */
+
+.combat-stats tr.current-user {
+  font-weight: bold;
+
+  background: linear-gradient(
+    90deg,
+    rgba(125, 255, 178, 0.08),
+    rgba(125, 255, 178, 0.02)
+  );
+
+  border: 1px solid rgba(125, 255, 178, 0.25);
+}
+
+/* ================= RANK MEDALS ================= */
+
 .combat-stats td.rank-1::before {
   content: "🥇 ";
-  font-size: 1.4em;
+  font-size: 1.2em;
 }
 .combat-stats td.rank-2::before {
   content: "🥈 ";
-  font-size: 1.3em;
+  font-size: 1.15em;
 }
 .combat-stats td.rank-3::before {
   content: "🥉 ";
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 
-/* Effet “chips” pour chaque ligne */
-.combat-stats tr {
-  margin: 3px 0;
-  border-radius: 8px;
-  transition: transform 0.2s, background 0.2s;
-}
-.combat-stats tr:hover {
-  transform: scale(1.02);
-  background-color: transparent;
-}
+/* ================= ARENA DISABLED ================= */
 
-/* 🔒 Arène désactivée */
 .combat-arena.arena-disabled {
   opacity: 0.4;
   pointer-events: none;
+
   filter: grayscale(100%);
   transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
-/* Optionnel : bouton visuellement bloqué */
+/* ================= DISABLED BUTTON ================= */
+
 .combat-arena.arena-disabled .combat-start-btn {
-  background: #555;
+  background: rgba(80, 80, 80, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
+
   cursor: not-allowed;
+  box-shadow: none;
+  animation: none;
+}
+
+/* ================= EXTRA SMALL ================= */
+
+@media (max-width: 380px) {
+  .combat-stats {
+    padding: 12px 10px;
+  }
+
+  .combat-stats table {
+    font-size: 0.68rem;
+  }
 }
 
 
@@ -2878,9 +2939,44 @@ footer a:visited {
 .badge-craftsmanship { box-shadow: 0 0 12px rgba(255, 170, 80, .9); }
 
 
+@media (max-width: 600px) {
+  .combat-nft-list {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .combat-nft-item {
+    height: 110px;
+    padding: 8px;
+  }
+
+  .combat-nft-item img,
+  .combat-nft-item video {
+    height: 110px;
+  }
+
+  .combat-nft-item .nft-name {
+    font-size: 0.65rem;
+  }
+
+  .combat-cards {
+    gap: 12px;
+  }
+
+  .combat-card-slot {
+    width: 80px;
+    height: 120px;
+    padding: 8px;
+  }
+
+  .combat-vs {
+    font-size: 26px;
+  }
+}
 
 </style>
-  <script type="module" crossorigin src="./assets/index-c394752c.js"></script>
+  <script type="module" crossorigin src="./assets/index-bea29fb1.js"></script>
 </head>
 
 <body>
