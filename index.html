@@ -2322,45 +2322,52 @@ footer a:visited {
 }
 
 /* ================= SELECTED (VERT) ================= */
+
 .combat-nft-item.selected {
   border-color: #7dffb2;
+
   box-shadow:
-    0 0 14px rgba(125, 255, 178, 0.9),
-    0 0 28px rgba(125, 255, 178, 0.6);
-  transform: scale(1.08);
+    0 0 10px rgba(125, 255, 178, 0.65),
+    0 0 22px rgba(125, 255, 178, 0.4);
+
+  transform: scale(1.05); /* 📱 moins agressif */
 }
 
 /* ================= ARENA ================= */
+
 .combat-arena {
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: 22px;
+  padding: 14px;
+
   border-radius: 14px;
+  text-align: center;
 
   background: linear-gradient(
     135deg,
     rgba(20, 40, 30, 0.85),
     rgba(10, 20, 15, 0.95)
   );
-
-  text-align: center;
 }
 
 /* ================= CARDS ================= */
+
 .combat-cards {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 16px; /* 📱 réduit */
+  flex-wrap: wrap; /* 📱 évite overflow */
 }
 
 /* ================= SLOT ================= */
+
 .combat-card-slot {
-  width: 210px;
-  height: 310px;
+  width: 180px;  /* 📱 réduit */
+  height: 260px;
 
   background: rgba(0, 0, 0, 0.45);
   border-radius: 14px;
-  padding: 10px;
+  padding: 8px;
 
   display: flex;
   align-items: center;
@@ -2370,37 +2377,46 @@ footer a:visited {
 }
 
 /* ================= SLOT SELECTED ================= */
+
 .combat-card-slot.selected {
   box-shadow:
-    0 0 14px rgba(125, 255, 178, 0.9),
-    0 0 28px rgba(125, 255, 178, 0.6);
+    0 0 10px rgba(125, 255, 178, 0.65),
+    0 0 22px rgba(125, 255, 178, 0.4);
 }
 
 /* ================= MEDIA SLOT ================= */
+
 .combat-card-slot img,
 .combat-card-slot video {
   width: 100%;
   height: 100%;
   object-fit: contain;
+
   border-radius: 10px;
+  background: #000;
 }
 
 /* ================= VS ================= */
+
 .combat-vs {
-  font-size: 42px;
-  font-weight: bold;
   font-family: 'Cinzel', serif;
+  font-size: clamp(26px, 6vw, 42px);
+  font-weight: bold;
+
   color: #ffd700;
-  text-shadow: 0 0 10px rgba(125, 255, 178, 0.6);
+  text-shadow:
+    0 0 6px rgba(255, 215, 100, 0.6),
+    0 2px 0 rgba(0, 0, 0, 0.8);
 }
 
 /* ================= BUTTON ================= */
-.combat-start-btn {
-  margin-top: 18px;
-  padding: 14px 26px;
 
-  font-size: 16px;
+.combat-start-btn {
+  margin-top: 16px;
+  padding: 12px 22px;
+
   font-family: 'Cinzel', serif;
+  font-size: 0.95rem;
   letter-spacing: 0.08em;
 
   cursor: pointer;
@@ -2408,42 +2424,48 @@ footer a:visited {
 
   color: #7dffb2;
   background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(125, 255, 178, 0.5);
+  border: 1px solid rgba(125, 255, 178, 0.45);
 
-  animation: combatPulse 2.5s infinite;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: combatPulse 2.8s infinite;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* ================= BUTTON HOVER ================= */
-.combat-start-btn:hover {
-  transform: scale(1.07);
-  box-shadow:
-    0 0 16px rgba(125, 255, 178, 0.9),
-    0 0 32px rgba(125, 255, 178, 0.6);
-  animation-play-state: paused;
+/* Hover uniquement desktop */
+@media (hover: hover) {
+  .combat-start-btn:hover {
+    transform: scale(1.06);
+    box-shadow:
+      0 0 14px rgba(125, 255, 178, 0.75),
+      0 0 28px rgba(125, 255, 178, 0.5);
+    animation-play-state: paused;
+  }
 }
 
 /* ================= BUTTON ANIMATION ================= */
+
 @keyframes combatPulse {
   0% {
-    box-shadow: 0 0 6px rgba(125, 255, 178, 0.4);
+    box-shadow: 0 0 6px rgba(125, 255, 178, 0.35);
   }
   50% {
     box-shadow:
-      0 0 14px rgba(125, 255, 178, 0.8),
-      0 0 28px rgba(125, 255, 178, 0.5);
+      0 0 12px rgba(125, 255, 178, 0.7),
+      0 0 24px rgba(125, 255, 178, 0.45);
   }
   100% {
-    box-shadow: 0 0 6px rgba(125, 255, 178, 0.4);
+    box-shadow: 0 0 6px rgba(125, 255, 178, 0.35);
   }
 }
 
 /* ================= RESULT ================= */
+
 .combat-result {
   margin-top: 14px;
-  font-size: 22px;
+  font-size: clamp(1rem, 4vw, 1.35rem);
   font-weight: bold;
-  text-shadow: 1px 1px 2px #000;
+
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .combat-result.win {
@@ -2455,6 +2477,7 @@ footer a:visited {
 }
 
 /* ================= NFT DÉJÀ JOUÉ ================= */
+
 .combat-nft-item.used {
   pointer-events: none;
   opacity: 0.45;
@@ -2463,6 +2486,7 @@ footer a:visited {
 }
 
 /* LABEL "DÉJÀ JOUÉ" */
+
 .already-used-label {
   position: absolute;
   bottom: 6px;
@@ -2470,17 +2494,32 @@ footer a:visited {
   transform: translateX(-50%);
 
   padding: 4px 8px;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
 
   font-family: 'Cinzel', serif;
   letter-spacing: 0.08em;
 
   color: #7dffb2;
   background: rgba(0, 0, 0, 0.75);
-  border-radius: 8px;
 
-  border: 1px solid rgba(125, 255, 178, 0.5);
+  border-radius: 8px;
+  border: 1px solid rgba(125, 255, 178, 0.45);
 }
+
+/* ================= EXTRA SMALL ================= */
+
+@media (max-width: 380px) {
+  .combat-card-slot {
+    width: 160px;
+    height: 235px;
+  }
+
+  .combat-cards {
+    gap: 12px;
+  }
+}
+
+
 
 
 /* ================= OVERLAY ================= */
