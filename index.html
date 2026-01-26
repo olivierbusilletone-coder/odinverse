@@ -2949,15 +2949,31 @@ footer a:visited {
   .combat-nft-item {
     height: 120px;
     padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.45); /* 🔒 fond noir */
+    border-radius: 14px;
+    overflow: hidden; /* 🔒 empêche l'image de dépasser */
   }
 
   .combat-nft-item img,
   .combat-nft-item video {
-    height: 110px;
+    max-width: 100%;    /* 🔒 largeur limitée au cadre */
+    max-height: 100%;   /* 🔒 hauteur limitée au cadre */
+    object-fit: contain; /* 🔒 conserve les proportions */
+    border-radius: 10px;
+    background: #000;   /* 🔒 fond noir derrière les NFT */
   }
 
   .combat-nft-item .nft-name {
     font-size: 0.65rem;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .combat-cards {
@@ -2975,8 +2991,9 @@ footer a:visited {
   }
 }
 
+
 </style>
-  <script type="module" crossorigin src="./assets/index-da1e2636.js"></script>
+  <script type="module" crossorigin src="./assets/index-9d5ad750.js"></script>
 </head>
 
 <body>
