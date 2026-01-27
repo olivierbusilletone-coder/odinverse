@@ -2336,53 +2336,71 @@ footer a:visited {
 /* ================= ARENA ================= */
 
 .combat-arena {
-  margin-top: 22px;
-  padding: 14px;
+  margin-top: 24px;
+  padding: 18px;
 
-  border-radius: 14px;
+  border-radius: 18px;
   text-align: center;
 
   background: linear-gradient(
     135deg,
-    rgba(20, 40, 30, 0.85),
-    rgba(10, 20, 15, 0.95)
+    rgba(20, 40, 30, 0.88),
+    rgba(10, 20, 15, 0.96)
   );
 }
 
-/* ================= CARDS ================= */
+/* ================= CARDS CONTAINER ================= */
 
 .combat-cards {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px; /* 📱 réduit */
-  flex-wrap: wrap; /* 📱 évite overflow */
+
+  gap: 14px;          /* espace mobile-friendly */
+  flex-wrap: wrap;   /* évite overflow sur petits écrans */
 }
 
-/* ================= SLOT ================= */
+/* ================= CARD SLOT ================= */
 
 .combat-card-slot {
-  width: 180px;  /* 📱 réduit */
-  height: 260px;
+  width: 160px;      /* taille adaptée smartphone */
+  height: 230px;
 
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 14px;
-  padding: 8px;
+  padding: 10px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 1px solid rgba(125, 255, 178, 0.15);
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+
+  border: 1.5px solid rgba(125, 255, 178, 0.25);
 }
 
-/* ================= SLOT SELECTED ================= */
+/* ================= CARD SLOT SELECTED ================= */
 
 .combat-card-slot.selected {
+  border-color: rgba(125, 255, 178, 0.85);
+
   box-shadow:
-    0 0 10px rgba(125, 255, 178, 0.65),
-    0 0 22px rgba(125, 255, 178, 0.4);
+    0 0 12px rgba(125, 255, 178, 0.75),
+    0 0 26px rgba(125, 255, 178, 0.45);
 }
+
+/* ================= SMALL SCREENS ================= */
+
+@media (max-width: 480px) {
+  .combat-arena {
+    padding: 16px;
+  }
+
+  .combat-card-slot {
+    width: 140px;
+    height: 210px;
+  }
+}
+
 
 /* ================= MEDIA SLOT ================= */
 
@@ -2411,26 +2429,29 @@ footer a:visited {
 
 /* ================= BUTTON ================= */
 
+
 .combat-start-btn {
-  margin-top: 16px;
-  padding: 12px 22px;
+  margin-top: 20px;
+  padding: 16px 26px; /* zone tactile plus large */
 
   font-family: 'Cinzel', serif;
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
+  font-size: 1.05rem; /* texte plus lisible sur mobile */
+  letter-spacing: 0.1em;
 
   cursor: pointer;
-  border-radius: 14px;
+  border-radius: 18px; /* plus doux visuellement */
 
   color: #7dffb2;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(125, 255, 178, 0.45);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1.5px solid rgba(125, 255, 178, 0.6);
 
-  animation: combatPulse 2.8s infinite;
+  animation: combatPulse 3.2s infinite; /* animation un peu plus lente */
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  min-height: 48px; /* recommandation accessibilité mobile */
 }
 
-/* Hover uniquement desktop */
+/* Désactivation du hover sur mobile */
 @media (hover: hover) {
   .combat-start-btn:hover {
     transform: scale(1.06);
@@ -2440,6 +2461,17 @@ footer a:visited {
     animation-play-state: paused;
   }
 }
+
+/* Ajustement spécifique mobile */
+@media (max-width: 480px) {
+  .combat-start-btn {
+    width: 100%;           /* bouton plein écran */
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    padding: 18px 20px;
+  }
+}
+
 
 /* ================= BUTTON ANIMATION ================= */
 
@@ -2511,7 +2543,7 @@ footer a:visited {
 @media (max-width: 240px) {
   .combat-card-slot {
     width: 120px;
-    height: 190px;
+    height: 160px;
   }
 
   .combat-cards {
@@ -2981,8 +3013,8 @@ footer a:visited {
   }
 
   .combat-card-slot {
-    width: 90px;
-    height: 100px;
+    width: 100px;
+    height: 120px;
     padding: 8px;
   }
 
