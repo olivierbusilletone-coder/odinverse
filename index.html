@@ -106,7 +106,12 @@ header {
   }
 }
 
-
+/* ♿ Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .header-title {
+    animation: none;
+  }
+}
 
 
 .header-logo {
@@ -198,7 +203,25 @@ main {
   contain: layout paint;
 }
 
+/* 📱 MOBILE */
+@media (max-width: 480px) {
+  .about {
+    padding: 14px 14px;
+    margin-bottom: 12px;
 
+    border-radius: 14px;
+
+    font-size: 0.95rem;
+    line-height: 1.55;
+
+    /* plus léger visuellement */
+    background: linear-gradient(
+      135deg,
+      rgba(20, 40, 30, 0.75),
+      rgba(10, 20, 15, 0.9)
+    );
+  }
+}
 
 
 
@@ -260,7 +283,25 @@ main {
 
   image-rendering: crisp-edges;
 }
+@media (hover: hover) {
+  .qr-chip:hover {
+    transform: scale(1.03);
+    box-shadow:
+      inset 0 0 0 1px rgba(92, 255, 157, 0.4),
+      0 0 36px rgba(92, 255, 157, 0.45);
+  }
+}
+@media (max-width: 480px) {
+  .qr-chip {
+    padding: 12px;
+    border-radius: 18px;
+  }
 
+  .qr-chip svg {
+    width: min(200px, 85vw);
+    padding: 10px;
+  }
+}
 
 
 /* ================= WALLET BALANCES — CHIP STYLE ================= */
@@ -370,6 +411,28 @@ main {
   letter-spacing: 0.06em;
 }
 
+/* 🖱️ DESKTOP HOVER SOFT */
+@media (hover: hover) {
+  .wallet-balances .balance-line:hover {
+    box-shadow:
+      inset 0 0 0 1px rgba(125, 255, 178, 0.35),
+      0 8px 20px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* 📱 MOBILE ADAPT */
+@media (max-width: 480px) {
+  .wallet-balances {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 18px;
+    font-size: 1.05rem;
+  }
+
+  .wallet-balances .balance-line {
+    padding: 8px 14px;
+  }
+}
 
 
 
@@ -878,7 +941,17 @@ footer a:visited {
     inset 0 0 0 1px rgba(92,255,157,0.45),
     0 0 18px rgba(92,255,157,0.28);
 }
+@media (max-width: 480px) {
+  .attr-row span {
+    font-size: 0.68rem;
+    padding: 6px 10px;
+  }
 
+  .attr-row:last-child span {
+    font-size: 0.8rem;
+    padding: 9px 20px;
+  }
+}
 
 
 /* ================= DESKTOP ONLY ================= */
@@ -886,7 +959,12 @@ footer a:visited {
   display: none !important;
 }
 
-
+/* Desktop réel (pas mobile, pas tablette) */
+@media (hover: hover) and (pointer: fine) {
+  #connectExtension {
+    display: inline-flex !important;
+  }
+}
 /* ================= PAGE CENTRALE ================= */
 .odins-preview {
   width: 100%;
@@ -913,6 +991,34 @@ footer a:visited {
   letter-spacing: 0.06em;
 }
 
+@media (max-width: 480px) {
+
+  /* stop scroll horizontal */
+  .odins-preview {
+    overflow: hidden;
+  }
+
+  /* casser le layout horizontal */
+  .odins-row {
+    display: block !important;
+    width: 100%;
+  }
+
+  /* 🔥 cacher TOUTES les NFTs */
+  .odins-row .odins-item {
+    display: none !important;
+  }
+
+  /* 🔥 montrer UNE seule NFT */
+  .odins-row .odins-item:first-child {
+    display: flex !important;   /* garde ton centrage */
+    margin: 0 auto;
+
+    width: 100%;
+    max-width: 220px;
+    height: 220px;
+  }
+}
 
 
 
@@ -1008,7 +1114,17 @@ footer a:visited {
   }
 }
 
+/* ♿ Respect accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .magic-text {
+    animation: none;
+  }
+}
 
+.magic-text.runic {
+  letter-spacing: 2px;
+  animation-duration: 4.5s;
+}
 /* ================= WHITE SHIMMER TITLE ================= */
 
 .header-center {
@@ -1114,7 +1230,12 @@ footer a:visited {
   }
 }
 
-
+/* ♿ Accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .section-title-white {
+    animation: none;
+  }
+}
 
 /* ================= ODINS STATS BAND ================= */
 .odins-stats-band {
@@ -1202,7 +1323,18 @@ footer a:visited {
   font-size: 0.9rem;
 }
 
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+  .odins-stats-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
+@media (max-width: 480px) {
+  .odins-stats-container {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ================= BOUTONS CENTRAL 3 ================= */
 .post-connect-actions {
@@ -1511,6 +1643,23 @@ footer a:visited {
   max-width: 530px;   /* 🔥 AUGMENTE ICI */
 }
 
+@media (max-width: 480px) {
+
+  .address {
+    max-width: 100%;             /* 🔥 prend toute la largeur */
+    padding: 8px 14px;           /* 🔥 plus confortable au doigt */
+
+    font-size: 0.65rem;          /* 🔽 plus compact */
+    letter-spacing: 0.04em;      /* 🔥 essentiel sur mobile */
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;     /* … propre */
+
+    justify-content: center;     /* centre visuellement */
+  }
+}
+
 
 
 
@@ -1542,7 +1691,16 @@ footer a:visited {
   border-color: rgba(92,255,157,0.45);
 }
 
+/* ================= RESPONSIVE ================= */
+.desktop-only {
+  display: none;
+}
 
+@media (min-width: 480px) {
+  .desktop-only {
+    display: block;
+  }
+}
 
 /* ================= NFT SEARCH ================= */
 .nft-search {
@@ -1901,7 +2059,19 @@ footer a:visited {
   letter-spacing: 0.06em;
 }
 
+/* ================= MOBILE ================= */
 
+@media (max-width: 768px) {
+  .main-tabs {
+    gap: 12px;
+  }
+
+  .main-tab {
+    padding: 12px 22px;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+  }
+}
 
 /* ================= LOADING CHIP ================= */
 .loading-chip {
@@ -1964,7 +2134,13 @@ footer a:visited {
   50%  { transform: translateX(40%); }
   100% { transform: translateX(120%); }
 }
-
+@media (max-width: 600px) {
+  .loading-chip {
+    max-width: 260px;
+    font-size: 0.65rem;
+    padding: 12px 16px;
+  }
+}
 
 /* ================= PALETTE ================= */
 :root {
@@ -2077,6 +2253,15 @@ footer a:visited {
     box-shadow 0.25s ease;
 }
 
+/* Hover desktop only */
+@media (hover: hover) {
+  .combat-nft-item:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.6),
+      0 0 14px rgba(125, 255, 178, 0.25);
+  }
+}
 
 /* ================= MEDIA ================= */
 
@@ -2246,7 +2431,26 @@ footer a:visited {
   min-height: 48px; /* recommandation accessibilité mobile */
 }
 
+/* Désactivation du hover sur mobile */
+@media (hover: hover) {
+  .combat-start-btn:hover {
+    transform: scale(1.06);
+    box-shadow:
+      0 0 14px rgba(125, 255, 178, 0.75),
+      0 0 28px rgba(125, 255, 178, 0.5);
+    animation-play-state: paused;
+  }
+}
 
+/* Ajustement spécifique mobile */
+@media (max-width: 480px) {
+  .combat-start-btn {
+    width: 100%;           /* bouton plein écran */
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    padding: 18px 20px;
+  }
+}
 
 
 /* ================= BUTTON ANIMATION ================= */
@@ -2314,6 +2518,18 @@ footer a:visited {
   border: 1px solid rgba(125, 255, 178, 0.45);
 }
 
+/* ================= EXTRA SMALL ================= */
+
+@media (max-width: 240px) {
+  .combat-card-slot {
+    width: 120px;
+    height: 160px;
+  }
+
+  .combat-cards {
+    gap: 12px;
+  }
+}
 
 
 
@@ -2629,7 +2845,12 @@ footer a:visited {
   transition: transform 0.2s ease, background-color 0.2s ease;
 }
 
-
+@media (hover: hover) {
+  .combat-stats tr:hover {
+    transform: scale(1.02);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+}
 
 /* ================= CURRENT USER ================= */
 
@@ -2681,7 +2902,17 @@ footer a:visited {
   animation: none;
 }
 
+/* ================= EXTRA SMALL ================= */
 
+@media (max-width: 380px) {
+  .combat-stats {
+    padding: 12px 10px;
+  }
+
+  .combat-stats table {
+    font-size: 0.68rem;
+  }
+}
 
 
 
@@ -2732,7 +2963,7 @@ footer a:visited {
 }
 
 /* =========================================================
-   📱 MOBILE CORE (≤ 480px)
+   📱 MOBILE CORE — IMAGE ACCURATE (≤ 480px)
 ========================================================= */
 
 @media (max-width: 480px) {
@@ -2747,7 +2978,7 @@ footer a:visited {
 
   .about {
     padding: 14px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     border-radius: 14px;
 
     font-size: 0.95rem;
@@ -2755,8 +2986,8 @@ footer a:visited {
 
     background: linear-gradient(
       135deg,
-      rgba(20, 40, 30, 0.75),
-      rgba(10, 20, 15, 0.9)
+      rgba(18, 36, 28, 0.78),
+      rgba(10, 20, 15, 0.92)
     );
   }
 
@@ -2775,10 +3006,12 @@ footer a:visited {
   /* -------- WALLET -------- */
 
   .wallet-balances {
+    display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    padding: 16px 18px;
-    font-size: 1.05rem;
+
+    padding: 16px;
+    font-size: 1rem;
   }
 
   .wallet-balances .balance-line {
@@ -2788,19 +3021,20 @@ footer a:visited {
   /* -------- ATTRIBUTES -------- */
 
   .attr-row span {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     padding: 6px 10px;
   }
 
   .attr-row:last-child span {
     font-size: 0.8rem;
-    padding: 9px 20px;
+    padding: 8px 18px;
   }
 
-  /* -------- ODINS NFT PREVIEW -------- */
+  /* -------- ODIN SELECTED (TOP CARD) -------- */
 
   .odins-preview {
     overflow: hidden;
+    margin-bottom: 14px;
   }
 
   .odins-row {
@@ -2815,15 +3049,17 @@ footer a:visited {
   .odins-row .odins-item:first-child {
     display: flex !important;
     margin: 0 auto;
+
     width: 100%;
-    max-width: 220px;
-    height: 220px;
+    max-width: 180px;
+    height: 180px;
   }
 
   /* -------- STATS GRID -------- */
 
   .odins-stats-container {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   /* -------- ADDRESS -------- */
@@ -2833,22 +3069,23 @@ footer a:visited {
     padding: 8px 14px;
 
     font-size: 0.65rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+
     justify-content: center;
   }
 
   /* -------- TABS -------- */
 
   .main-tabs {
-    gap: 12px;
+    gap: 10px;
   }
 
   .main-tab {
-    padding: 12px 22px;
+    padding: 10px 20px;
     font-size: 0.9rem;
     letter-spacing: 0.06em;
   }
@@ -2857,16 +3094,17 @@ footer a:visited {
 
   .loading-chip {
     max-width: 260px;
-    font-size: 0.65rem;
     padding: 12px 16px;
+
+    font-size: 0.65rem;
   }
 
-  /* -------- COMBAT NFT GRID -------- */
+  /* -------- COMBAT NFT GRID (SELECTION) -------- */
 
   .combat-nft-list {
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 4px;
-    padding: 4px;
+    gap: 6px;
+    padding: 6px;
   }
 
   .combat-nft-item {
@@ -2875,8 +3113,8 @@ footer a:visited {
 
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 
     background: rgba(0, 0, 0, 0.45);
     border-radius: 14px;
@@ -2888,6 +3126,7 @@ footer a:visited {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+
     border-radius: 10px;
     background: #000;
   }
@@ -2895,40 +3134,69 @@ footer a:visited {
   .combat-nft-item .nft-name {
     font-size: 0.65rem;
     text-align: center;
+
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* -------- COMBAT CARDS -------- */
+  /* -------- COMBAT VIEW (VS) -------- */
 
   .combat-cards {
-    gap: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 16px;
+    margin: 18px 0 12px;
   }
 
   .combat-card-slot {
-    width: 100px;
-    height: 120px;
-    padding: 8px;
+    width: 128px;
+    height: 188px;
+    padding: 10px;
+
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 16px;
+
+    border: 1.5px solid rgba(125, 255, 178, 0.35);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .combat-card-slot.selected {
+    border-color: rgba(125, 255, 178, 0.9);
+    box-shadow:
+      0 0 14px rgba(125, 255, 178, 0.75),
+      0 0 30px rgba(125, 255, 178, 0.4);
   }
 
   .combat-vs {
-    font-size: 26px;
+    font-size: 18px;
+    font-weight: 600;
+    opacity: 0.85;
   }
 
   /* -------- COMBAT BUTTON -------- */
 
   .combat-start-btn {
     width: 100%;
-    padding: 18px 20px;
+    max-width: 300px;
+    margin: 16px auto 0;
 
-    font-size: 1.1rem;
-    letter-spacing: 0.12em;
+    padding: 14px 18px;
+
+    font-size: 0.95rem;
+    letter-spacing: 0.14em;
+
+    border-radius: 20px;
   }
 }
 
 /* =========================================================
-   🖱️ DESKTOP ONLY (HOVER SAFE)
+   🖱️ DESKTOP ONLY — HOVER SAFE
 ========================================================= */
 
 @media (hover: hover) and (pointer: fine) {
@@ -2968,8 +3236,9 @@ footer a:visited {
 }
 
 
+
 </style>
-  <script type="module" crossorigin src="./assets/index-9d5ad750.js"></script>
+  <script type="module" crossorigin src="./assets/index-c394752c.js"></script>
 </head>
 
 <body>
