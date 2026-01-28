@@ -1445,6 +1445,42 @@ footer a:visited {
   color: #ffd86a;
 }
 
+/* ================= RESPONSIVE SMARTPHONE ================= */
+@media (max-width: 480px) {
+  
+  /* Container des boutons */
+  .post-connect-actions {
+    grid-template-columns: 1fr; /* une seule colonne */
+    gap: 16px;                  /* espacement réduit */
+    margin: 40px 16px;          /* marge plus petite */
+  }
+
+  /* Carte action */
+  .action-card {
+    max-width: 100%;            /* prend toute la largeur */
+    padding: 20px;              /* padding réduit */
+    border-radius: 14px;        /* coins légèrement plus petits */
+  }
+
+  /* Texte des cartes */
+  .card-value {
+    font-size: 1.8rem;          /* texte un peu plus petit */
+  }
+
+  .card-label {
+    font-size: 0.8rem;          /* texte plus petit */
+    letter-spacing: 0.03em;
+  }
+  
+  /* Hover sur mobile souvent inutile, mais on peut ajouter un léger effet tactile */
+  .action-card:active {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 15px 30px rgba(0,0,0,0.6);
+  }
+}
+
 /* ================= WALLET BOX (GLASS CARD) ================= */
 .wallet-box {
   max-width: 640px;
@@ -3270,8 +3306,9 @@ footer a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
 
-  padding: 4px 12px;
+  padding: 4px 14px;
   height: 26px;
 
   font-family: 'Cinzel', serif;
@@ -3280,45 +3317,88 @@ footer a:visited {
   letter-spacing: 0.16em;
   text-transform: uppercase;
 
-  color: #9cffc8;
+  color: #bfffdc;
 
-  background: rgba(20, 60, 40, 0.55);
-  border-radius: 999px; /* 💊 effet chip */
+  background:
+    linear-gradient(
+      135deg,
+      rgba(40, 90, 70, 0.65),
+      rgba(15, 40, 30, 0.75)
+    );
+
+  border-radius: 999px; /* 💊 chip */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 
   box-shadow:
-    inset 0 0 0 1px rgba(125, 255, 178, 0.55);
+    inset 0 0 0 1px rgba(125, 255, 178, 0.6),
+    0 0 6px rgba(125, 255, 178, 0.25);
 
   cursor: pointer;
+  user-select: none;
+
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
+/* ✨ halo runique discret */
+.arena-rules-btn::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+
+  box-shadow:
+    0 0 10px rgba(125, 255, 178, 0.25);
+
+  opacity: 0.35;
+}
+
+/* 🖱️ Hover desktop */
 @media (hover: hover) and (pointer: fine) {
   .arena-rules-btn:hover {
-    background: rgba(30, 90, 60, 0.75);
+    background:
+      linear-gradient(
+        135deg,
+        rgba(60, 130, 95, 0.8),
+        rgba(25, 70, 50, 0.85)
+      );
+
     box-shadow:
-      inset 0 0 0 1px rgba(125, 255, 178, 0.9),
-      0 0 10px rgba(125, 255, 178, 0.35);
-    transform: translateY(-50%) scale(1.06);
+      inset 0 0 0 1px rgba(125, 255, 178, 0.95),
+      0 0 16px rgba(125, 255, 178, 0.45);
+
+    transform: translateY(-50%) scale(1.07);
   }
 }
 
+/* 👆 Feedback tactile mobile */
+.arena-rules-btn:active {
+  transform: translateY(-50%) scale(0.96);
+  box-shadow:
+    inset 0 0 0 1px rgba(125, 255, 178, 0.9),
+    0 0 6px rgba(125, 255, 178, 0.35);
+}
 
 /* ================= MOBILE FIX ================= */
+
 @media (max-width: 480px) {
   .arena-header {
-    padding-right: 56px; /* réserve pour la chip */
+    padding-right: 58px; /* réserve pour la chip */
   }
 
   .arena-rules-btn {
     height: 24px;
-    font-size: 0.6rem;
     padding: 4px 10px;
+
+    font-size: 0.6rem;
     letter-spacing: 0.14em;
   }
 }
+
 
 
 
@@ -3567,7 +3647,7 @@ footer a:visited {
           aria-label="Enemy Odin"
         ></div>
       </div>
-
+<br>
       <button
         id="startCombatBtn"
         class="combat-start-btn"
