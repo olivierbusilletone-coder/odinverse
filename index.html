@@ -3421,13 +3421,58 @@ footer a:visited {
   }
 }
 
+.combat-msg {
+  display: none;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* ⛔ LIMITE 7 NFT */
+.combat-msg.limit {
+  display: block;
+  color: #ffb3b3;
+  background: rgba(120, 0, 0, 0.35);
+  border: 1px solid rgba(255, 80, 80, 0.6);
+}
+
+.combat-msg.limit::before {
+  content: "⛔ You already played the maximum of 7 NFTs";
+  font-family: 'Cinzel', serif;
+}
+
+/* ❌ COOLDOWN */
+.combat-msg.cooldown {
+  display: block;
+  color: #ffd27d;
+  background: rgba(120, 90, 0, 0.35);
+  border: 1px solid rgba(255, 200, 80, 0.6);
+}
+
+.combat-msg.cooldown::before {
+  content: "❌ This NFT is on cooldown, try again later";
+  font-family: 'Cinzel', serif;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
 
 
 
 
 
 </style>
-  <script type="module" crossorigin src="./assets/index-d51eece7.js"></script>
+  <script type="module" crossorigin src="./assets/index-959fdfc6.js"></script>
 </head>
 
 <body>
@@ -3685,6 +3730,7 @@ footer a:visited {
         aria-live="polite"
       ></div>
     </section>
+<div id="combatMessage" class="combat-msg"></div>
 
 <br><br><br>
     <!-- ===== COMBAT STATS / LEADERBOARD ===== -->
