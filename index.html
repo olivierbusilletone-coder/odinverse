@@ -725,109 +725,194 @@ html, body {
 
 
 /* ================= MODAL ================= */
+/* ═══════════════════════════════════════════════════
+   NFT MODAL — Premium redesign
+═══════════════════════════════════════════════════ */
 .nft-modal {
   position: fixed;
   inset: 0;
-  color: #7dffb2;
-
-  background: linear-gradient(
-    135deg,
-    rgba(20, 40, 30, 0.85),
-    rgba(10, 20, 15, 0.95)
-  );
   display: none;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  overflow-y: auto;          /* ✅ scroll modal */
   padding: 20px;
-    /* 🪓 POLICE VIKING */
+  overflow-y: auto;
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+
+  /* Backdrop sombre avec blur */
+  background: rgba(2, 6, 4, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .nft-modal-content {
-  width: 90%;
-  max-width: 420px;
-  color: #7dffb2;
-
-  background: linear-gradient(
-    135deg,
-    rgba(20, 40, 30, 0.85),
-    rgba(10, 20, 15, 0.95)
-  );
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--border-strong);
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;          /* ✅ scroll interne */
   position: relative;
-    /* 🪓 POLICE VIKING */
+  width: 90%;
+  max-width: 460px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+
+  /* Fond glassmorphism */
+  background: linear-gradient(160deg, rgba(10, 24, 17, 0.97), rgba(4, 10, 7, 0.99));
+  border-radius: 24px;
+  padding: 0;
+
+  /* Bordure + glow */
+  border: 1px solid rgba(92, 255, 160, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(92, 255, 160, 0.06),
+    0 32px 80px rgba(0, 0, 0, 0.80),
+    0 0 40px rgba(92, 255, 160, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  animation: modalIn .28s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(.94) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0);    }
 }
 
-/* MODAL MEDIA */
+/* ── Scrollbar interne ── */
+.nft-modal-content::-webkit-scrollbar { width: 5px; }
+.nft-modal-content::-webkit-scrollbar-track { background: transparent; }
+.nft-modal-content::-webkit-scrollbar-thumb {
+  background: rgba(92, 255, 160, 0.30);
+  border-radius: 999px;
+}
+
+/* ── Accent line haut ── */
+.nft-modal-content::before {
+  content: "";
+  position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(92,255,160,.60), transparent);
+  border-radius: 0 0 4px 4px;
+}
+
+/* ── Media (image / video) ── */
 .modal-image,
 .nft-modal video {
   width: 100%;
-  max-height: 300px;
+  aspect-ratio: 1 / 1;
+  max-height: 340px;
   object-fit: contain;
-  border-radius: 12px;
-    /* 🪓 POLICE VIKING */
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+  object-position: center;
+  border-radius: 22px 22px 0 0;
+  background: #000;
+  display: block;
 }
 
-/* ================= ATTRIBUTES ================= */
+/* ── Body padding ── */
+.nft-modal-body {
+  padding: 18px 20px 6px;
+}
+
+/* ── Titre ── */
+.nft-modal-content h3 {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(.92rem, 2vw, 1.15rem);
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(92,255,160,.20);
+  margin: 16px 20px 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(92,255,160,.08);
+}
+
+/* ── Attributes ── */
 .nft-attributes {
+  margin: 12px 20px 0;
   border-radius: 14px;
-  margin-top: 14px;
-  max-height: 220px;
+  overflow: hidden;
+  border: 1px solid rgba(92, 255, 160, 0.10);
+  max-height: 260px;
   overflow-y: auto;
-  font-size: 0.9rem;
-    /* 🪓 POLICE VIKING */
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+  font-size: .84rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(92,255,160,.28) transparent;
+}
+.nft-attributes::-webkit-scrollbar { width: 4px; }
+.nft-attributes::-webkit-scrollbar-thumb {
+  background: rgba(92,255,160,.28); border-radius: 999px;
 }
 
-/* traits blancs entre lignes */
 .attr {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  color: #7dffb2; 
-  background: linear-gradient( 135deg, rgba(20, 40, 30, 0.85), 
-  rgba(10, 20, 15, 0.95) );
-  margin: 0;
-  border-bottom: 1px solid rgba(255,255,255,0.15);
-    /* 🪓 POLICE VIKING */
+  padding: 9px 14px;
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.06em;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background .14s;
 }
+.attr:hover { background: rgba(92, 255, 160, 0.04); }
+.attr:last-child { border-bottom: none; }
 
-.attr:last-child {
-  border-bottom: none;
+/* Trait type (gauche) */
+.attr-type {
+  color: rgba(255, 255, 255, 0.42);
+  font-size: .66rem;
+  letter-spacing: .10em;
+  text-transform: uppercase;
 }
-
-/* ================= CLOSE BUTTON ================= */
-.close-modal {
-  margin-top: 16px;
-  width: 100%;
-  padding: 12px;
-
-  border-radius: 10px;
+/* Trait value (droite) */
+.attr-value {
+  color: rgba(92, 255, 160, 0.90);
   font-weight: 700;
+  letter-spacing: .06em;
+  text-align: right;
+}
+/* Rarity badge (si présent) */
+.attr-rarity {
+  font-size: .56rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(92, 255, 160, 0.08);
+  border: 1px solid rgba(92, 255, 160, 0.16);
+  color: rgba(92, 255, 160, 0.70);
+  margin-left: 8px;
+  white-space: nowrap;
+}
 
-  color: #7dffb2; 
-  background: linear-gradient( 135deg, rgba(20, 40, 30, 0.85), 
-  rgba(10, 20, 15, 0.95) );
-
-  border: none;
+/* ── Close button ── */
+.close-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 16px 20px 20px;
+  width: calc(100% - 40px);
+  padding: 13px;
+  border-radius: 12px;
+  font-family: 'Cinzel', serif;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
   cursor: pointer;
 
-  transition: background 0.2s ease, transform 0.2s ease;
-    /* 🪓 POLICE VIKING */
+  color: rgba(92, 255, 160, 0.80);
+  background: rgba(92, 255, 160, 0.06);
+  border: 1px solid rgba(92, 255, 160, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+
+  transition: all .18s cubic-bezier(.22, 1, .36, 1);
+}
+.close-modal:hover {
+  color: #fff;
+  background: rgba(92, 255, 160, 0.12);
+  border-color: rgba(92, 255, 160, 0.38);
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(92, 255, 160, 0.14);
+}
+
+/* ── transition: background 0.2s ease, transform 0.2s ease; kept for compat ── */
+/* 🪓 POLICE VIKING
   font-family: 'Cinzel', serif;
   letter-spacing: 0.06em;
 }
@@ -1479,7 +1564,7 @@ footer a:visited {
    ACTION CARDS — même visuel que les sf-card (footer)
 ═══════════════════════════════════════════════════ */
 .post-connect-actions {
-  display: grid;
+  display: flex;
   grid-template-columns: repeat(3, 220px);
   justify-content: center;
   gap: 14px;
@@ -2355,7 +2440,7 @@ footer a:visited {
 
 .combat-nft-item {
   position: relative;
-  width: 100%;
+  width: 90%;
   height: auto;
   min-height: 200px;
   padding: 8px;
@@ -4507,14 +4592,14 @@ html {
 .odin-preview-cell img,
 .odin-preview-cell video {
   width: 100%; height: 100%;
-  object-fit: cover;
+  object-fit: contain;       /* NFT entier visible, pas coupé */
+  object-position: center;
   display: block;
   transition: transform .22s ease, filter .22s ease;
 }
 .odin-preview-cell:hover img,
 .odin-preview-cell:hover video {
-  transform: scale(1.10);
-  filter: brightness(1.12);
+  filter: brightness(1.10);
 }
 /* Overlay gradient + nom au hover */
 .odin-preview-cell::after {
@@ -5526,7 +5611,7 @@ html {
 .odin-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(24,232,132,.55); }
 .odin-coll-right { flex-shrink: 0; width: clamp(300px, 55%, 580px); }
 .odin-preview-grid {
-  display: grid; grid-template-columns: repeat(3,1fr); gap: 5px;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;
 }
 .odin-preview-cell {
   aspect-ratio: 1/1; border-radius: 9px; overflow: hidden;
@@ -5535,7 +5620,7 @@ html {
 }
 .odin-preview-cell:hover { border-color: rgba(92,255,160,.42); transform: scale(1.05); z-index:1; }
 .odin-preview-cell.active-cell { border-color: rgba(92,255,160,.78); box-shadow: 0 0 0 2px rgba(92,255,160,.38); }
-.odin-preview-cell img, .odin-preview-cell video { width:100%; height:100%; object-fit:cover; }
+.odin-preview-cell img, .odin-preview-cell video { width:100%; height:100%; object-fit:contain; object-position:center; }
 .odin-preview-cell .preview-sold-out {
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
   background:rgba(0,0,0,.52); font-family:'Cinzel',serif; font-size:.48rem;
@@ -6012,7 +6097,7 @@ html {
 }
 
 </style>
-  <script type="module" crossorigin src="./assets/index-422f037b.js"></script>
+  <script type="module" crossorigin src="./assets/index-d0e351b8.js"></script>
 </head>
 
 <body>
@@ -6288,7 +6373,7 @@ html {
 
       </div>
     </div>
-
+<br/>
     <!-- ═══════════════ TOP HOLDERS ═══════════════ -->
     <section id="topHoldersDeck" class="numbered-section" style="display:none;">
       <div class="section-header">
@@ -6439,12 +6524,21 @@ html {
 <!-- MODAL -->
 <div class="nft-modal" id="nftModal">
   <div class="nft-modal-content">
-    <h3 id="modalTitle"></h3>
+
+    <!-- Media pleine largeur en haut -->
     <div id="modalMediaContainer">
       <img id="modalImage" class="modal-image">
     </div>
+
+    <!-- Titre -->
+    <h3 id="modalTitle"></h3>
+
+    <!-- Attributs -->
     <div class="nft-attributes" id="modalAttributes"></div>
-    <button class="close-modal secondary" id="closeModal">Close</button>
+
+    <!-- Close -->
+    <button class="close-modal" id="closeModal">✕ &nbsp;Close</button>
+
   </div>
 </div>
 
