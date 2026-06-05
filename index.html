@@ -196,38 +196,30 @@ header span {
   filter: drop-shadow(0 0 12px rgba(224, 180, 76, 0.2));
 }
 
-@media (max-width: 400px) {
-
-  header {
-    padding: 8px 6px;
-  }
-
-  .header-title {
-    gap: 10px;                 /* 🔽 moins d’espace entre logo / texte */
-    letter-spacing: 10px;      /* 🔥 CRUCIAL sur mobile */
-  }
-
-  header span {
-    font-size: clamp(1.1rem, 6vw, 1.4rem);
-    letter-spacing: 0.18em;    /* remplace le letter-spacing énorme */
-  }
-
-  .header-logo {
-    height: 32px;              /* 🔽 logos plus petits */
-    opacity: 0.55;
-  }
-
-  .header-subtitle {
-    margin-top: 6px;
-    font-size: 0.75rem;
-    letter-spacing: 0.14em;
-  }
-
-  .header-bottom-logo img {
-    margin-top: 10px;
-    height: 64px;              /* 🔽 logo bas plus discret */
-    opacity: 0.75;
-  }
+/* ── Header responsive ── */
+@media (max-width: 768px) {
+  header { padding: 16px 12px 14px; }
+  .header-title-row { gap: 10px; }
+  .header-title { letter-spacing: clamp(6px, 2.5vw, 14px); gap: 8px; }
+  .header-title-text { font-size: clamp(1.2rem, 5vw, 1.6rem); }
+  header span { font-size: clamp(1rem, 4.5vw, 1.4rem); }
+  .header-logo { height: 36px; opacity: .55; }
+  .header-subtitle { margin-top: 5px; font-size: .68rem; letter-spacing: .16em; }
+  .section-title-white { font-size: .62rem; letter-spacing: .18em; margin-top: 5px; }
+  .header-bottom-logo img { margin-top: 12px; height: 58px; opacity: .80; }
+}
+@media (max-width: 480px) {
+  header { padding: 12px 10px 10px; }
+  .header-title { letter-spacing: clamp(4px, 2vw, 10px); }
+  .header-title-text { font-size: clamp(1rem, 6vw, 1.3rem); }
+  .header-logo { height: 26px; opacity: .50; }
+  .section-title-white { font-size: .56rem; letter-spacing: .14em; }
+  .header-bottom-logo img { margin-top: 10px; height: 46px; }
+}
+@media (max-width: 360px) {
+  .header-title-text { font-size: 1rem; letter-spacing: 4px; }
+  .header-logo { height: 22px; }
+  .header-bottom-logo img { height: 38px; margin-top: 8px; }
 }
 
 /* ================= MAIN ================= */
@@ -6097,7 +6089,7 @@ html {
 }
 
 </style>
-  <script type="module" crossorigin src="./assets/index-d0e351b8.js"></script>
+  <script type="module" crossorigin src="./assets/index-04275eb0.js"></script>
 </head>
 
 <body>
