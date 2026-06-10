@@ -2,16 +2,40 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- ── SEO ── -->
+  <title>ODINVERSE — Viking NFT Arena on MultiversX</title>
+  <meta name="description" content="Odinverse — collection de 377 NFTs Viking animés sur MultiversX. Arène PvP, rewards $TSK, staking et tournois. Rejoins la bataille des Immortels.">
+  <meta name="theme-color" content="#04080a">
+  <meta name="robots" content="index, follow">
+
+  <!-- ── Open Graph (partage Discord / Telegram / Facebook) ── -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ODINVERSE — Viking NFT Arena on MultiversX">
+  <meta property="og:description" content="377 NFTs Viking animés · Arène PvP · Rewards $TSK. Rejoins la bataille des Immortels.">
+  <meta property="og:image" content="./images/logo3.png">
+  <meta property="og:site_name" content="Odinverse">
+
+  <!-- ── Twitter / X Card ── -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ODINVERSE — Viking NFT Arena on MultiversX">
+  <meta name="twitter:description" content="377 NFTs Viking animés · Arène PvP · Rewards $TSK.">
+  <meta name="twitter:image" content="./images/logo3.png">
+  <meta name="twitter:site" content="@Triskel_MvX">
+
+  <!-- ── Preconnect performance ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.multiversx.com">
+  <link rel="preconnect" href="https://media.multiversx.com">
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
 
   <!-- FAVICON -->
   <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAAGpklEQVRYR+3WfWwb5R0H8O9zd/b55fwSO06zvDSh7RQ12xilRYACTNXoNJiGJkrGpI1VqrRsK+MPhDSNbcLKpA0q9qIOMVFRVJUJoRZpqxDN2oVReaTQJlVLnTS0JWkSN04cx2/n8/ne79kfLKw9JcENmbY/8vnPj373+33v7rnzAWtWhjgXlkPPvumj5gSHkJ9i4hrp++dHbH7z3UwTJHR4NNra0F7NT0+6JSHMhAH85uBL1t6f7gZywJyXsdfteMpkGEZz9l1KTeG6vrfrcTGT+cEdrlLE7+XduXKVCgGBuANh1uUXmPlC2VzHaUzH5zdIEznZJyoG0xAJw1Zli9gmguEQZU2dFvIlPcfHRD5c9+K+Xz/7snOOE+tcWEysdX2XRu1d42MToeYgL1yVGaHACkJag2+qIHsLVd0/I6q+i7PlurRCBYnw/klR9Wc1KphCVOD8oUAYeiA5nQtHNnQ0VsTS6+fODI445zgxzoXFMGr1lNfvgyZEMXwlhXpGQzU3Bzo/AxTmoBXngVAUhkeAEAyCh4UQTxBwEZiVMuzcNIaSH4KLtcDkXHYgHB1yzlhMTVeua9u2OYmQnTzLNMxmC/ATK9EU9h+PBDxJ3tbHtXzWRRkuun7TRpiZSRjpiZHNISbBlEupsFU5n5nNBooWF1p36xZYlDn9QvyZ550zFlNTuNHRUbqhfb1mq9WHVFWDpGhWriSppy6MXbo8MfN4U0tjI+X4ew2WR9hFkR0b/cWRdy8+ndHxo4pcbfRHY831t27jPaEolGLhqfMDA6POGYup6bYCANN3/BCxrdN1za1obW7auKVz00O33/aF3QDgrW9y8QygyDJijZ/DXfd91QsAd953T+ftX+rYEq0LBsomhaypx1957rk3nL2XUnO4BGD6GHc38XrHg6EAKqKImMCXASAQqSdunwDWMhD2edDW3kwAIMJauqRZEPQySuMfDVdU9TFn3+XUHA4AEonEtCLL98tVJSlSFxSbcQOAyTAwGRYcx0HVNJjax68y1jJ5Qhhk8uKp9JWxHa/39uacPZdzU+EA4HIiMSnL2XuJbb1kGHoVAORcllLbhmQClFIQXaEAiCiWS4phxf98YvArIyMjc85en+amwwHA4OBYeeD9cz/mOP8DAFCtlFnCMKDUBksphFDYBQB52b7r8F/6fgXAcvaoxYrCLUgkEhkAcBu6zbMEtmHA0BSwlkEA0P7+/qzzmJvxmcIt0HWVaG4vdNYNyntR1gxnyYqsSri6oMCK6WsQ/F7kcwUMnRu2nTUrsSrhdHA2a+iwC1lUCjm0N9TV9EHxaVYlnIcatsmwMFkXqroJluedJSuyKuEoyzIctUDdHgguAoNwnLNmJVYlnGiyRQ9DwIx9gI6oB4ZpFp01K7EqewNA5Mtf7BjsvKVpI6vJQ8nM1PZkck52Ft2smr5KaqCYenXK6/V+p1KpfP/MB6krzoL/NdJR79vtXPyv6OnZ6vrZY9+K9u2LBw/Gd3kA4M14jy/52rN1CzX07H4XpSc/2fy2bXvfe/l3EQCwUykvAOyP9/gojTOUUpJ673DkSt8rMQA4u3+/a+Jg3LNw7GKWvK1bIq1tklh6Y3Jy8kmfrl06ceHqWEvE99rU1OyTO3fcvb7v/eQ7IYrvDr89svOtMyMn9/Y88uhw4m8HM9k5+9jpC2fa3MVnvnbnbVs9LLunxAT+2rvrJ1tzU9eO5fNF4ejAuZPtIePR8VS6+8SFsXecsxcs+bQe6B+coKZ1BJYxW3q1/0R3N1hF0euzheLp/Gz2EQAoVTSfatEWAHDrchdRpPN7/nDojwAwPT4RchM7HmuIvbV9e68Z8HqaTEWZevvY4F4AsAkJGKYVcYy9wZLhAIAQ6ILHrfUCdix7R0wzrQ0E5IfzucKrAGAbuqVJ4sd/VdT+vcvFthx4uueXAMC5WMvUVMEqi2kAiAQDbZG6wOZ7utq/DQD5iuKmFOYNAx2WDWdRuAlhfQDwp8RQRjfMS6qmDdyysS0AABW5ypUk2QsAHfc/WJjMFN+duTb9IAC4haA9M5f7+9hk6ucAMHA5czUtqqPffOAbhwGgUlU8Fmj9kfge4Yah11k2nGboM6ZlXfxkwbLSPMzniyUptu+JJ/iCKM9UVTUFAP84evTrPEceNmXpEADkqaeqBhpenM/npQN7Hm4rSFJqPpvb9MKhw78FgKJU/rAoyZvPnk/2/GfiZ7NwMqS7u3vhYVrqBBeeYra7s9P97xd+uAW4fp+5Abiu+71mzZo1a/5f/As2SgJimJsXqwAAAABJRU5ErkJggg==">
   <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
   <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsIAAA7CARUoSoAAAAGHaVRYdFhNTDpjb20uYWRvYmUueG1wAAAAAAA8P3hwYWNrZXQgYmVnaW49J++7vycgaWQ9J1c1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCc/Pg0KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyI+PHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0idXVpZDpmYWY1YmRkNS1iYTNkLTExZGEtYWQzMS1kMzNkNzUxODJmMWIiIHhtbG5zOnRpZmY9Imh0dHA6Ly9ucy5hZG9iZS5jb20vdGlmZi8xLjAvIj48dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPjwvcmRmOkRlc2NyaXB0aW9uPjwvcmRmOlJERj48L3g6eG1wbWV0YT4NCjw/eHBhY2tldCBlbmQ9J3cnPz4slJgLAAAGpklEQVRYR+3WfWwb5R0H8O9zd/b55fwSO06zvDSh7RQ12xilRYACTNXoNJiGJkrGpI1VqrRsK+MPhDSNbcLKpA0q9qIOMVFRVJUJoRZpqxDN2oVReaTQJlVLnTS0JWkSN04cx2/n8/ne79kfLKw9JcENmbY/8vnPj373+33v7rnzAWtWhjgXlkPPvumj5gSHkJ9i4hrp++dHbH7z3UwTJHR4NNra0F7NT0+6JSHMhAH85uBL1t6f7gZywJyXsdfteMpkGEZz9l1KTeG6vrfrcTGT+cEdrlLE7+XduXKVCgGBuANh1uUXmPlC2VzHaUzH5zdIEznZJyoG0xAJw1Zli9gmguEQZU2dFvIlPcfHRD5c9+K+Xz/7snOOE+tcWEysdX2XRu1d42MToeYgL1yVGaHACkJag2+qIHsLVd0/I6q+i7PlurRCBYnw/klR9Wc1KphCVOD8oUAYeiA5nQtHNnQ0VsTS6+fODI445zgxzoXFMGr1lNfvgyZEMXwlhXpGQzU3Bzo/AxTmoBXngVAUhkeAEAyCh4UQTxBwEZiVMuzcNIaSH4KLtcDkXHYgHB1yzlhMTVeua9u2OYmQnTzLNMxmC/ATK9EU9h+PBDxJ3tbHtXzWRRkuun7TRpiZSRjpiZHNISbBlEupsFU5n5nNBooWF1p36xZYlDn9QvyZ550zFlNTuNHRUbqhfb1mq9WHVFWDpGhWriSppy6MXbo8MfN4U0tjI+X4ew2WR9hFkR0b/cWRdy8+ndHxo4pcbfRHY831t27jPaEolGLhqfMDA6POGYup6bYCANN3/BCxrdN1za1obW7auKVz00O33/aF3QDgrW9y8QygyDJijZ/DXfd91QsAd953T+ftX+rYEq0LBsomhaypx1957rk3nL2XUnO4BGD6GHc38XrHg6EAKqKImMCXASAQqSdunwDWMhD2edDW3kwAIMJauqRZEPQySuMfDVdU9TFn3+XUHA4AEonEtCLL98tVJSlSFxSbcQOAyTAwGRYcx0HVNJjax68y1jJ5Qhhk8uKp9JWxHa/39uacPZdzU+EA4HIiMSnL2XuJbb1kGHoVAORcllLbhmQClFIQXaEAiCiWS4phxf98YvArIyMjc85en+amwwHA4OBYeeD9cz/mOP8DAFCtlFnCMKDUBksphFDYBQB52b7r8F/6fgXAcvaoxYrCLUgkEhkAcBu6zbMEtmHA0BSwlkEA0P7+/qzzmJvxmcIt0HWVaG4vdNYNyntR1gxnyYqsSri6oMCK6WsQ/F7kcwUMnRu2nTUrsSrhdHA2a+iwC1lUCjm0N9TV9EHxaVYlnIcatsmwMFkXqroJluedJSuyKuEoyzIctUDdHgguAoNwnLNmJVYlnGiyRQ9DwIx9gI6oB4ZpFp01K7EqewNA5Mtf7BjsvKVpI6vJQ8nM1PZkck52Ft2smr5KaqCYenXK6/V+p1KpfP/MB6krzoL/NdJR79vtXPyv6OnZ6vrZY9+K9u2LBw/Gd3kA4M14jy/52rN1CzX07H4XpSc/2fy2bXvfe/l3EQCwUykvAOyP9/gojTOUUpJ673DkSt8rMQA4u3+/a+Jg3LNw7GKWvK1bIq1tklh6Y3Jy8kmfrl06ceHqWEvE99rU1OyTO3fcvb7v/eQ7IYrvDr89svOtMyMn9/Y88uhw4m8HM9k5+9jpC2fa3MVnvnbnbVs9LLunxAT+2rvrJ1tzU9eO5fNF4ejAuZPtIePR8VS6+8SFsXecsxcs+bQe6B+coKZ1BJYxW3q1/0R3N1hF0euzheLp/Gz2EQAoVTSfatEWAHDrchdRpPN7/nDojwAwPT4RchM7HmuIvbV9e68Z8HqaTEWZevvY4F4AsAkJGKYVcYy9wZLhAIAQ6ILHrfUCdix7R0wzrQ0E5IfzucKrAGAbuqVJ4sd/VdT+vcvFthx4uueXAMC5WMvUVMEqi2kAiAQDbZG6wOZ7utq/DQD5iuKmFOYNAx2WDWdRuAlhfQDwp8RQRjfMS6qmDdyysS0AABW5ypUk2QsAHfc/WJjMFN+duTb9IAC4haA9M5f7+9hk6ucAMHA5czUtqqPffOAbhwGgUlU8Fmj9kfge4Yah11k2nGboM6ZlXfxkwbLSPMzniyUptu+JJ/iCKM9UVTUFAP84evTrPEceNmXpEADkqaeqBhpenM/npQN7Hm4rSFJqPpvb9MKhw78FgKJU/rAoyZvPnk/2/GfiZ7NwMqS7u3vhYVrqBBeeYra7s9P97xd+uAW4fp+5Abiu+71mzZo1a/5f/As2SgJimJsXqwAAAABJRU5ErkJggg==">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
-
-
-<title>ODINVERSE — Viking MultiversX</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
 
 <style>
 /* ================= RESET ================= */
@@ -57,6 +81,11 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Safe-area pour encoches iPhone / Android */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
 /* Grain texture subtil */
@@ -202,7 +231,7 @@ header span {
   .header-title-row { gap: 10px; }
   .header-title { letter-spacing: clamp(6px, 2.5vw, 14px); gap: 8px; }
   .header-title-text { font-size: clamp(1.2rem, 5vw, 1.6rem); }
-  header span { font-size: clamp(1rem, 4.5vw, 1.4rem); }
+  header span { font-size: clamp(1rem, 4.5vw, 1rem); }
   .header-logo { height: 36px; opacity: .55; }
   .header-subtitle { margin-top: 5px; font-size: .68rem; letter-spacing: .16em; }
   .section-title-white { font-size: .62rem; letter-spacing: .18em; margin-top: 5px; }
@@ -1317,7 +1346,7 @@ footer a:visited {
   display: inline-block;
 
   font-family: 'Cinzel', serif;
-  font-size: clamp(4rem, 5vw, 1.8rem);
+  font-size: clamp(3rem, 5vw, 1.8rem);
 
   letter-spacing: 0.65em;
   padding-left: 0.225em;
@@ -1556,32 +1585,35 @@ footer a:visited {
    ACTION CARDS — même visuel que les sf-card (footer)
 ═══════════════════════════════════════════════════ */
 .post-connect-actions {
-  display: flex;
-  grid-template-columns: repeat(3, 220px);
-  justify-content: center;
-  gap: 14px;
-  margin: 22px 0 18px;
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);  /* 3 colonnes fluides */
+  gap: clamp(8px, 2vw, 14px);
+  margin: 22px auto 18px;
+  max-width: 900px;
+  width: 100%;
   font-family: 'Cinzel', serif;
 }
-@media (max-width: 780px) {
-  .post-connect-actions { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 480px) {
-  .post-connect-actions { grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+@media (max-width: 600px) {
+  .post-connect-actions {
+    grid-template-columns: 1fr;  /* 1 colonne sur mobile */
+    gap: 10px;
+    margin: 14px 0;
+  }
 }
 
 /* ── Base card — clone de .sf-card ── */
 .action-card {
-  width: 480px;
-  height: 260px;
+  width: 100%;
+  height: auto;
+  min-height: clamp(100px, 18vw, 180px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 
-  gap: 10px;
-  padding: 24px 16px 20px;
-  border-radius: 18px;
+  gap: clamp(6px, 1.5vw, 10px);
+  padding: clamp(16px, 3vw, 24px) clamp(12px, 2vw, 16px);
+  border-radius: clamp(14px, 2vw, 18px);
   text-decoration: none;
   color: #fff;
   position: relative;
@@ -1601,16 +1633,18 @@ footer a:visited {
 
 /* ── Icon box — clone de .sf-card-icon ── */
 .card-icon {
-  width: 52px; height: 52px; border-radius: 14px;
+  width: clamp(36px, 8vw, 52px);
+  height: clamp(36px, 8vw, 52px);
+  border-radius: clamp(10px, 2vw, 14px);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.55rem; flex-shrink: 0;
+  font-size: clamp(1.1rem, 3.5vw, 1.55rem); flex-shrink: 0;
   /* background set per-card below */
 }
 
 /* ── Name — clone de .sf-card-name ── */
 .card-value {
   font-family: 'Cinzel', serif;
-  font-size: .82rem; font-weight: 700;
+  font-size: clamp(.68rem, 2vw, .82rem); font-weight: 700;
   letter-spacing: .10em; text-transform: uppercase; color: #fff;
 }
 
@@ -3718,14 +3752,15 @@ footer a:visited {
 
   /* -------- COMBAT VIEW (VS) -------- */
 
-  .combat-cards {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.combat-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 18px 0 12px;
 
-    gap: 16px;
-    margin: 18px 0 12px;
-  }
+  position: relative;
+}
 
   .combat-card-slot {
     width: 128px;
@@ -3944,22 +3979,29 @@ footer a:visited {
 
 .combat-msg {
   display: none;
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.7rem;
+
+  position: relative;
+  z-index: 10;
+
+  margin: 0 auto;
+
+  padding: 10px 18px;
+  border-radius: 8px;
+
+  font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  animation: fadeIn 0.25s ease-out;
+
+  animation: fadeInCombat 0.25s ease-out;
 }
 
 /* ⛔ LIMITE 7 NFT */
 .combat-msg.limit {
   display: block;
   color: #ffb3b3;
-  background: rgba(120, 0, 0, 0.35);
+  background: rgba(120, 0, 0, 0.85);
   border: 1px solid rgba(255, 80, 80, 0.6);
 }
 
@@ -3996,9 +4038,16 @@ footer a:visited {
   font-family: 'Cinzel', serif;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-3px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes fadeInCombat {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -55%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* Compteur combat */
@@ -6089,7 +6138,7 @@ html {
 }
 
 </style>
-  <script type="module" crossorigin src="./assets/index-04275eb0.js"></script>
+  <script type="module" crossorigin src="./assets/index-4c92f756.js"></script>
 </head>
 
 <body>
@@ -6438,7 +6487,7 @@ html {
       <div class="arena-chips-row">
 
         <div id="combatCounter" class="viking-chip">⚔️ 0 / 7</div>
-        <a href="./images/rules.jpg" target="_blank" class="arena-rules-btn" aria-label="Open Arena Rules">📜 Rules</a>
+        <a href="./images/rules.html" target="_blank" class="arena-rules-btn" aria-label="Open Arena Rules">📜 Rules</a>
       </div>
 	  
     </div>
@@ -6460,25 +6509,30 @@ html {
       <div class="combat-divider"><span>ᚱ</span></div>
 
       <!-- ═══ ÉTAPE 02 — ARÈNE ═══ -->
-      <section id="combatArena" class="combat-arena combat-step">
-        <div class="combat-step-head">
-          <span class="combat-step-num">02</span>
-          <p class="combat-hint" style="margin-bottom:0;">The Battle</p>
-        </div>
-        <div class="combat-cards">
-          <div id="playerCard" class="combat-card-slot" aria-label="Player Odin"></div>
-          <div class="combat-vs" aria-hidden="true">VS</div>
-          <div id="enemyCard" class="combat-card-slot" aria-label="Enemy Odin"></div>
-        </div>
-        <button id="startCombatBtn" class="combat-start-btn" type="button" disabled>
-          ⚔️ Start Battle
-        </button>
-        <div id="combatResult" class="combat-result" aria-live="polite"></div>
-      </section>
+<section id="combatArena" class="combat-arena combat-step">
+  <div class="combat-step-head">
+    <span class="combat-step-num">02</span>
+    <p class="combat-hint" style="margin-bottom:0;">The Battle</p>
+  </div>
 
+<div class="combat-cards">
+
+  <div id="playerCard" class="combat-card-slot"></div>
+
+  <div class="combat-vs">VS</div>
+
+  <div id="enemyCard" class="combat-card-slot"></div>
+
+</div>
+  <button id="startCombatBtn" class="combat-start-btn" type="button" disabled>
+    ⚔️ Start Battle
+  </button>
+
+  <div id="combatResult" class="combat-result" aria-live="polite"></div>
+</section>
 <div id="combatMessage" class="combat-msg"></div>
-
     <!-- ===== COMBAT STATS / LEADERBOARD ===== -->
+	<br/><br/><br/>
     <section id="combatStats" class="combat-stats" style="margin-top: 8px;">
       <h3>🏆 Battle Stats / Leaderboard</h3>
 
@@ -6668,7 +6722,7 @@ html {
 <!-- ==    <div class="sf-links">
       <a href="https://x.com/Triskel_MvX" target="_blank" rel="noopener noreferrer">Built by Triskel</a>
       <a href="https://t.me/TriskelMultiversX" target="_blank" rel="noopener noreferrer">Telegram</a>
-      <a href="./images/rules.jpg" target="_blank">Rules</a>
+      <a href="./images/rules.html" target="_blank">Rules</a>
     </div>== -->
   </div>
 
@@ -6718,7 +6772,8 @@ html {
 
       const nonce = document.createElement("div");
       nonce.className = "nft-nonce";
-      nonce.textContent = nft.nonce !== undefined ? `nonce ${nft.nonce}` : "";
+      // nft.nonce est déjà en décimal depuis l'API
+      nonce.textContent = nft.nonce != null ? nft.nonce : "";
 
       card.append(media, name, nonce);
       return card;
@@ -6841,7 +6896,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ph.className = "preview-sold-out";
         ph.textContent = "—";
         cell.appendChild(ph);
-      }
+      } 
 
       grid.appendChild(cell);
     }
