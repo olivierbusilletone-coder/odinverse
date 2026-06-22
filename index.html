@@ -39,7 +39,7 @@
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-C1I3Fhx8.js"></script>
+  <script type="module" crossorigin src="./assets/index-0NmYPv5u.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DiEvJhrP.css">
 </head>
 
@@ -526,7 +526,7 @@
           <div class="runner-overlay-title" id="runnerOverlayTitle">⚔️ Raider Run</div>
           <div class="runner-overlay-text" id="runnerOverlayText">
             Run through the night across the wild lands. Watch for hidden traps and
-            creatures lurking in the dark — every step you take earns $TSK, stored on
+            creatures lurking in the dark - every step you take earns $TSK, stored on
             your wallet and claimable later.
           </div>
           <button class="runner-play-btn" id="runnerPlayBtn">▶ Play</button>
@@ -765,17 +765,14 @@ document.addEventListener("DOMContentLoaded", function () {
      Triggered when odinsList is populated (MutationObserver)
      or when nftSectionOdins becomes visible.
   */
-  function buildCollectionUI(nfts) {
-    if (!nfts || !nfts.length) return;
-
-    /* 3×3 grid — chargement API publique aléatoire */
+  function buildCollectionUI() {
+    /* La grid se charge depuis l'API publique, indépendamment
+       du nombre de NFTs OdinsDeck dans le wallet (0 inclus). */
     const grid = document.getElementById("odinsPreviewGrid");
     if (grid && !grid.dataset.built) {
       grid.dataset.built = "1";
       loadGridPreview(grid);
-    }   /* fin if grid */
-
-
+    }
   }
 
   /* ── loadGridPreview — API publique MultiversX, 9 NFTs aléatoires ── */
@@ -856,11 +853,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  /* Watch for playerNfts to be set by main.js */
+  /* Watch for playerNfts to be set by main.js — déclenche même si 0 NFT OdinsDeck */
   const watchInterval = setInterval(() => {
-    if (window.playerNfts && window.playerNfts.length) {
+    if (window.playerNftsReady) {
       clearInterval(watchInterval);
-      buildCollectionUI(window.playerNfts);
+      buildCollectionUI();
     }
   }, 400);
 
@@ -875,7 +872,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const nft = window.playerNfts[i];
           if (nft) card.dataset.category = nft._displayTrait || "unknown";
         });
-        buildCollectionUI(window.playerNfts);
+        buildCollectionUI();
       }
     });
     mo.observe(odinsList, { childList: true });
