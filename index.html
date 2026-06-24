@@ -39,8 +39,8 @@
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-0NmYPv5u.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DiEvJhrP.css">
+  <script type="module" crossorigin src="./assets/index-ZNrCbGaE.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-o04lhoPx.css">
 </head>
 
 <body>
@@ -408,76 +408,156 @@
         <div id="challengeCountdown" class="challenge-countdown"></div>
     <div class="other-body-panel combat-body">
 
-      <!-- ═══ ÉTAPE 01 — SÉLECTION ═══ -->
-      <section id="combatSelect" class="combat-step">
+      <!-- ═══ STEP 01 — 🃏 NFT EXPLORER ═══ -->
+      <section id="combatCollectPick" class="combat-step">
         <div class="combat-step-head">
           <span class="combat-step-num">01</span>
-          <p class="combat-hint">Select your Odin</p>
+          <p class="combat-hint">🃏 NFT Explorer — Choose your collection &amp; build your hand</p>
+        </div>
+
+        <!-- Collection selector -->
+        <div class="combat-coll-zone">
+          <div class="combat-coll-input-row">
+            <input
+              type="text"
+              id="combatCollInput"
+              class="combat-coll-input"
+              placeholder="Collection ID… e.g. ODINSDECK-4e300a"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="combat-coll-load-btn" id="combatCollLoadBtn">⚡ Load</button>
+          </div>
+          <div class="combat-coll-presets">
+            <button class="combat-coll-preset active" data-coll="ODINSDECK-4e300a">⚡ Odin's Deck</button>
+            <button class="combat-coll-preset" data-coll="FRUGLY-e6158a">🦄 FRUGLY</button>
+            <button class="combat-coll-preset" data-coll="DCLUB-b0ddcb">🎴 DCLUB</button>
+          </div>
+          <div class="combat-coll-status" id="combatCollStatus" style="display:none;">
+            <span>📦 <b id="combatCollNameDisplay">—</b></span>
+            <span>🔢 Total: <b id="combatCollTotal">0</b></span>
+            <input type="text" class="combat-coll-search" id="combatCollSearch" placeholder="🔍 Filter by name…" />
+          </div>
+        </div>
+		<div class="combat-coll-grid" id="combatCollGrid"></div>
+        <!-- Hand of 7 -->
+        <div class="combat-hand-zone" id="combatHandZone">
+          <div class="combat-hand-header">
+            <span class="combat-hand-label">🤚 Your Hand</span>
+            <div class="combat-hand-pips" id="combatHandPips"></div>
+            <span class="combat-hand-count" id="combatHandCount">0 / 7</span>
+            <button class="combat-hand-reset-btn" id="combatHandResetBtn">✕ Clear</button>
+            <button class="combat-hand-confirm-btn" id="combatHandConfirmBtn" disabled>⚔️ Play this hand →</button>
+          </div>
+          <div class="combat-hand-slots" id="combatHandSlots"></div>
+        </div>
+
+        <!-- NFT grid -->
+        <div class="combat-coll-state" id="combatCollState">
+          <div class="combat-coll-state-icon">🃏</div>
+          <div class="combat-coll-state-title">Load a collection to build your hand</div>
+          <div style="font-size:.68rem;opacity:.55;font-family:'Cinzel',serif;">Click any card to add it — up to 7</div>
+        </div>
+        
+        <div class="combat-coll-pagination" id="combatCollPagination" style="display:none;"></div>
+
+      </section>
+
+      <!-- ═══ DIVIDER 01→02 ═══ -->
+      <div class="combat-divider"><span>ᚢ</span></div>
+
+      <!-- ═══ STEP 02 — SELECT YOUR FIGHTER ═══ -->
+      <section id="combatSelect" class="combat-step">
+        <div class="combat-step-head">
+          <span class="combat-step-num">02</span>
+          <p class="combat-hint" id="combatSelectHint">Select your fighter from your hand</p>
         </div>
         <div id="combatNftList" class="combat-nft-list">
-          <!-- NFTs injectés en JS -->
+          <!-- Cards injected by JS after hand is confirmed -->
         </div>
       </section>
 
-      <!-- ═══ DIVIDER ═══ -->
+      <!-- ═══ DIVIDER 02→03 ═══ -->
       <div class="combat-divider"><span>ᚱ</span></div>
 
-      <!-- ═══ ÉTAPE 02 — ARÈNE ═══ -->
-<section id="combatArena" class="combat-arena combat-step">
-  <div class="combat-step-head">
-    <span class="combat-step-num">02</span>
-    <p class="combat-hint" style="margin-bottom:0;">The Battle</p>
-  </div>
+      <!-- ═══ STEP 03 — THE BATTLE ═══ -->
+      <section id="combatArena" class="combat-arena combat-step">
+        <div class="combat-step-head">
+          <span class="combat-step-num">03</span>
+          <p class="combat-hint" style="margin-bottom:0;">The Battle</p>
+        </div>
+        <div class="combat-cards">
+          <div id="playerCard" class="combat-card-slot"></div>
+          <div class="combat-vs">VS</div>
+          <div id="enemyCard" class="combat-card-slot"></div>
+        </div>
+        <button id="startCombatBtn" class="combat-start-btn" type="button" disabled>
+          ⚔️ Start Battle
+        </button>
+        <div id="combatResult" class="combat-result" aria-live="polite"></div>
+      </section>
 
-<div class="combat-cards">
+      <div id="combatMessage" class="combat-msg"></div>
 
-  <div id="playerCard" class="combat-card-slot"></div>
+      <!-- ===== BATTLE STATS / LEADERBOARD ===== -->
+      <br/><br/>
+      <section id="combatStats" class="combat-stats" style="margin-top:8px;">
+        <h3>🏆 Battle Stats / Leaderboard</h3>
+        <div class="combat-stats-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">🏆 Rank</th>
+                <th scope="col">⚡ ERD</th>
+                <th scope="col">✅ Wins</th>
+                <th scope="col">💀 Losses</th>
+                <th scope="col">🌀 Draws</th>
+                <th scope="col">⚖️ Win Rate</th>
+                <th scope="col">💥 KO</th>
+                <th scope="col">✨ Perfect</th>
+                <th scope="col">🔥 Best Streak</th>
+                <th scope="col">⭐ Total XP</th>
+                <th scope="col">🎖️ Grade</th>
+                <th scope="col">💰 Rewards $TSK</th>
+              </tr>
+            </thead>
+            <tbody id="combatStatsBody"></tbody>
+          </table>
+        </div>
+      </section>
 
-  <div class="combat-vs">VS</div>
-
-  <div id="enemyCard" class="combat-card-slot"></div>
-
-</div>
-  <button id="startCombatBtn" class="combat-start-btn" type="button" disabled>
-    ⚔️ Start Battle
-  </button>
-
-  <div id="combatResult" class="combat-result" aria-live="polite"></div>
-</section>
-<div id="combatMessage" class="combat-msg"></div>
-    <!-- ===== COMBAT STATS / LEADERBOARD ===== -->
-	<br/><br/><br/>
-    <section id="combatStats" class="combat-stats" style="margin-top: 8px;">
-      <h3>🏆 Battle Stats / Leaderboard</h3>
-
-      <div class="combat-stats-table-wrapper">
-        <table>
-          <thead>
-            <tr>
-			 <th scope="col">🏆 Rank</th>
-			  <th scope="col">⚡ ERD</th>
-			  <th scope="col">✅ Wins</th>
-			  <th scope="col">💀 Losses</th>
-			  <th scope="col">🌀 Draws</th>
-			  <th scope="col">⚖️ WinRate</th>
-			  <th scope="col">💥 KO</th>
-			  <th scope="col">✨ Perfect</th>
-			  <th scope="col">🔥 Best Streak</th>
-			  <th scope="col">⭐ Total XP</th>
-			  <th scope="col">🎖️ Grade</th>
-			  <th scope="col">💰 Rewards $TSK</th>
-			</tr>
-          </thead>
-          <tbody id="combatStatsBody">
-            <!-- Injecté en JS -->
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <!-- ===== PROJECTS LEADERBOARD ===== -->
+      <section id="projectsLeaderboard" class="plb-section">
+        <div class="plb-title-bar">
+          <span class="plb-title-icon">🏆</span>
+          <div>
+            <h3 class="plb-title">Projects Leaderboard</h3>
+            <p class="plb-subtitle">Victory ranking by collection · Arena battles</p>
+          </div>
+        </div>
+        <div class="plb-scroll">
+          <table class="plb-table">
+            <thead>
+              <tr>
+                <th class="plb-th-rank">Rank</th>
+                <th class="plb-th-coll">Collection</th>
+                <th class="plb-th-num">Wins</th>
+                <th class="plb-th-num">Losses</th>
+                <th class="plb-th-num">Draws</th>
+                <th class="plb-th-num">Battles</th>
+                <th class="plb-th-rate">Win Rate</th>
+                <th class="plb-th-ko">KO</th>
+                <th class="plb-th-streak">Best Streak</th>
+              </tr>
+            </thead>
+            <tbody id="projectsLbBody"></tbody>
+          </table>
+        </div>
+      </section>
 
   </div><!-- /combat-wrap -->
   </div><!-- /combatTabContent -->
-  </div><!-- /combatTabContent ROOT (était manquant dans le fichier original) -->
+  </div><!-- /combatTabContent ROOT -->
 
   <!-- ═══════════════ RAIDER RUN TAB (mini-game) ═══════════════ -->
   <div
@@ -561,6 +641,7 @@
   </div><!-- /runnerTabContent -->
 
 </div><!-- /mainTabContents -->
+
 </main>
 
 <!-- MODAL -->
