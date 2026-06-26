@@ -39,8 +39,8 @@
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-ZNrCbGaE.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-o04lhoPx.css">
+  <script type="module" crossorigin src="./assets/index-CI1KBXru.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C-Xcx8MT.css">
 </head>
 
 <body>
@@ -441,6 +441,7 @@
         </div>
 		<div class="combat-coll-grid" id="combatCollGrid"></div>
         <!-- Hand of 7 -->
+		<div class="combat-hand-slots" id="combatHandSlots"></div>
         <div class="combat-hand-zone" id="combatHandZone">
           <div class="combat-hand-header">
             <span class="combat-hand-label">🤚 Your Hand</span>
@@ -449,7 +450,7 @@
             <button class="combat-hand-reset-btn" id="combatHandResetBtn">✕ Clear</button>
             <button class="combat-hand-confirm-btn" id="combatHandConfirmBtn" disabled>⚔️ Play this hand →</button>
           </div>
-          <div class="combat-hand-slots" id="combatHandSlots"></div>
+          
         </div>
 
         <!-- NFT grid -->
@@ -500,9 +501,12 @@
       <div id="combatMessage" class="combat-msg"></div>
 
       <!-- ===== BATTLE STATS / LEADERBOARD ===== -->
-      <br/><br/>
+      <br/>
       <section id="combatStats" class="combat-stats" style="margin-top:8px;">
-        <h3>🏆 Battle Stats / Leaderboard</h3>
+        <div class="combat-step-head">
+          <span class="combat-step-num">04</span>
+          <p class="combat-hint" style="margin-bottom:0;">Battle Stats</p>
+        </div>
         <div class="combat-stats-table-wrapper">
           <table>
             <thead>
@@ -528,14 +532,11 @@
 
       <!-- ===== PROJECTS LEADERBOARD ===== -->
       <section id="projectsLeaderboard" class="plb-section">
-        <div class="plb-title-bar">
-          <span class="plb-title-icon">🏆</span>
-          <div>
-            <h3 class="plb-title">Projects Leaderboard</h3>
-            <p class="plb-subtitle">Victory ranking by collection · Arena battles</p>
-          </div>
+        <div class="combat-step-head plb-step-head">
+          <span class="combat-step-num">05</span>
+          <p class="combat-hint" style="margin-bottom:0;">Hall of Battles</p>
         </div>
-        <div class="plb-scroll">
+        <div class="plb-table-wrap">
           <table class="plb-table">
             <thead>
               <tr>
@@ -543,7 +544,6 @@
                 <th class="plb-th-coll">Collection</th>
                 <th class="plb-th-num">Wins</th>
                 <th class="plb-th-num">Losses</th>
-                <th class="plb-th-num">Draws</th>
                 <th class="plb-th-num">Battles</th>
                 <th class="plb-th-rate">Win Rate</th>
                 <th class="plb-th-ko">KO</th>
