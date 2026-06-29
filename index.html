@@ -39,8 +39,8 @@
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-CI1KBXru.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-C-Xcx8MT.css">
+  <script type="module" crossorigin src="./assets/index-BFsrWRVX.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DtdElt7_.css">
 </head>
 
 <body>
@@ -81,11 +81,26 @@
 <div class="top-hud">
 
   <!-- ── NAVIGATION ── -->
-  <nav class="header-nav">
-    <a href="#aboutSection">About</a>
-    <a href="#postConnectActions">NFT</a>
-    <a href="#postConnectActions">$TSK</a>
-    <a href="#postConnectActions">Acces Mint</a>
+  <nav class="header-nav" aria-label="Navigation principale">
+    <a href="#aboutSection" class="nav-link">
+      <span class="nav-rune">ᚠ</span>
+      <span class="nav-text">About</span>
+    </a>
+    <span class="nav-sep">᛭</span>
+    <a href="#nft" class="nav-link">
+      <span class="nav-rune">ᚾ</span>
+      <span class="nav-text">NFT</span>
+    </a>
+    <span class="nav-sep">᛭</span>
+    <a href="#postConnectActions" class="nav-link">
+      <span class="nav-rune">ᛏ</span>
+      <span class="nav-text">$TSK</span>
+    </a>
+    <span class="nav-sep">᛭</span>
+    <a href="#postConnectActions" class="nav-link nav-link--mint">
+      <span class="nav-rune">ᛗ</span>
+      <span class="nav-text">Mint</span>
+    </a>
   </nav>
 
   <!-- ── BALANCES (entre nav et bouton) ── -->
@@ -134,8 +149,8 @@
 
 </div>
 
-
-<div class="section">
+<br><br>
+<div class="section" id="aboutSection">
   <div class="container">
     <div class="section-header fade-in">
       <div class="section-num">01</div>
@@ -143,26 +158,41 @@
         <div class="section-title">ᚠᚢᚦᚨ - ABOUT - ᚨᚦᚢᚠ<small>About</small></div>
       </div>
     </div>
-</div>	
+  </div>
+</div>
 
-  
-	 <p class="magic-text runic">
-	  Dive into the mythical world of the digital realm with the Odin's Deck collection on MultiversX.<br />
-	  An exclusive animated collection of 377 NFTs across 15 categories. These digital artifacts offer you much more than just images: powers and rewards.<br />
-	  Your destiny now rests in your hands.
-	 </p>
-	
-	<section class="odins-preview" id="odinsPreview">
-		<div class="odins-row" id="odinsRow"></div>
-	</section>
+<div class="about-lore-card">
+    <div class="about-lore-rune about-lore-rune--tl">ᚠ</div>
+    <div class="about-lore-rune about-lore-rune--tr">ᚢ</div>
+    <div class="about-lore-rune about-lore-rune--bl">ᚦ</div>
+    <div class="about-lore-rune about-lore-rune--br">ᚨ</div>
 
+    <div class="about-lore-inner">
+      <div class="about-lore-divider"></div>
+      <p class="about-lore-text">
+        Dive into the mythical world of the digital realm with the
+        <strong>Odin's Deck</strong> collection on MultiversX.
+      </p>
+      <p class="about-lore-text">
+        An exclusive animated collection of <strong>377 NFTs</strong> across
+        <strong>15 categories</strong>. These digital artifacts offer you much
+        more than just images: <em>powers and rewards</em>.
+      </p>
+      <p class="about-lore-text about-lore-destiny">
+        ⚔️ &nbsp;Your destiny now rests in your hands.&nbsp; ⚔️
+      </p>
+      <div class="about-lore-divider"></div>
+    </div>
 
+    <section class="odins-preview" id="odinsPreview">
+      <div class="odins-row" id="odinsRow"></div>
+    </section>
 
+  </div>
 
-
-
+<br><br>
 <!-- SECTION 2 : UTILITÉ -->
-<div class="section">
+<div class="section" id="nft">
   <div class="container">
     <div class="section-header fade-in">
       <div class="section-num">02</div>
