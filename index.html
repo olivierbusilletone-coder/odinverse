@@ -33,13 +33,14 @@
   <link rel="dns-prefetch" href="https://www.gstatic.com">
 
   <!-- FAVICON -->
-  <link rel="icon" type="image/png" href="./assets/logo4-DXsREkGh.png">
+  <link rel="icon" href="./assets/logo4-DXsREkGh.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/logo4-DXsREkGh.png">
   <link rel="apple-touch-icon" href="./assets/logo4-DXsREkGh.png">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-lTARqO7O.js"></script>
+  <script type="module" crossorigin src="./assets/index-CUDEMMZ-.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-CrHAFrKF.css">
 </head>
 
@@ -155,7 +156,7 @@
     <div class="section-header fade-in">
       <div class="section-num">01</div>
       <div>
-        <h2 class="section-title">ᚠᚢᚦᚨ - ABOUT - ᚨᚦᚢᚠ<small>About</small></h2>
+        <div class="section-title">ᚠᚢᚦᚨ - ABOUT - ᚨᚦᚢᚠ<small>About</small></div>
       </div>
     </div>
   </div>
@@ -197,7 +198,7 @@
     <div class="section-header fade-in">
       <div class="section-num">02</div>
       <div>
-        <h2 class="section-title">Usefulness of NFTs<small>Rewards system · TSK integration · Gaming</small></h2>
+        <div class="section-title">Usefulness of NFTs<small>Rewards system · TSK integration · Gaming</small></div>
       </div>
     </div>
     <div class="utility-grid fade-in">
@@ -249,7 +250,7 @@
     <div class="tabs-section-label">
       <span class="section-num">03</span>
       <div>
-        <h2 class="section-title">Access<small>Mint · TSK · Gaming</small></h2>
+        <div class="section-title">Access<small>Mint · TSK · Gaming</small></div>
       </div>
     </div>
 
@@ -364,7 +365,7 @@
       <div class="section-header">
         <div class="section-num">04</div>
         <div>
-          <h2 class="section-title">Top Holders<small>Odin's Deck leaderboard</small></h2>
+          <div class="section-title">Top Holders<small>Odin's Deck leaderboard</small></div>
         </div>
       </div>
       <div class="other-coll-wrap holders-wrap">
@@ -383,7 +384,7 @@
       <div class="section-header">
         <div class="section-num">05</div>
         <div>
-          <h2 class="section-title">MultiversX NFTs<small>All other NFTs in your wallet</small></h2>
+          <div class="section-title">MultiversX NFTs<small>All other NFTs in your wallet</small></div>
         </div>
       </div>
       <div class="other-coll-wrap">
@@ -851,6 +852,154 @@
 
 
 
-<script src="./collection-ui.js" defer></script>
+<script>
+/* ══════════════════════════════════════════════════
+   ODINVERSE — Collection UI Enhancements
+   • 3×3 preview grid
+   • Category thumbnail strip
+   • Rewards accordion
+══════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ── Rewards accordion ── */
+  const toggle = document.getElementById("odinsRewardsToggle");
+  const body   = document.getElementById("odinsRewardsBody");
+  const arrow  = document.getElementById("odinsRewardsArrow");
+  if (toggle && body) {
+    toggle.addEventListener("click", () => {
+      const open = body.classList.toggle("open");
+      if (arrow) arrow.classList.toggle("open", open);
+    });
+  }
+
+  /* ── Populate 3×3 preview grid + category strip ──
+     Triggered when odinsList is populated (MutationObserver)
+     or when nftSectionOdins becomes visible.
+  */
+  function buildCollectionUI() {
+    /* La grid se charge depuis l'API publique, indépendamment
+       du nombre de NFTs OdinsDeck dans le wallet (0 inclus). */
+    const grid = document.getElementById("odinsPreviewGrid");
+    if (grid && !grid.dataset.built) {
+      grid.dataset.built = "1";
+      loadGridPreview(grid);
+    }
+  }
+
+  /* ── loadGridPreview — API publique MultiversX, 9 NFTs aléatoires ── */
+  async function loadGridPreview(grid) {
+    grid.innerHTML = "";
+
+    // 👁️ Observer pause/play pour les vidéos (performance mobile)
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(entry => {
+        const el = entry.target;
+        if (el.tagName === "VIDEO") {
+          entry.isIntersecting ? el.play().catch(() => {}) : el.pause();
+        }
+      }),
+      { threshold: 0.2 }
+    );
+
+    let picked = [];
+
+    try {
+      const res = await fetch(
+        "https://api.multiversx.com/nfts?collection=ODINSDECK-4e300a&size=100"
+      );
+      if (res.ok) {
+        const data = await res.json();
+        picked = data
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 6);   /* 3×2 = 6 NFTs */
+      }
+    } catch (err) {
+      console.warn("Grid preview load error:", err);
+    }
+
+    // 6 slots : 3 colonnes × 2 lignes
+    for (let i = 0; i < 6; i++) {
+      const nft  = picked[i];
+      const cell = document.createElement("div");
+
+      if (nft) {
+        cell.className = "odin-preview-cell" + (i === 0 ? " active-cell" : "");
+        const media = nft.media?.[0];
+        const url   = media?.originalUrl || media?.url || nft.url || "";
+        if (nft.name) cell.dataset.name = nft.name;
+
+        let el;
+        if (media?.fileType?.startsWith("video") || /\.(mp4|webm|ogg)$/i.test(url)) {
+          el = document.createElement("video");
+          el.src = url;
+          el.autoplay = true; el.loop = true; el.muted = true;
+          el.playsInline = true; el.preload = "metadata";
+          el.disablePictureInPicture = true; el.controls = false;
+          observer.observe(el);
+        } else {
+          el = document.createElement("img");
+          el.src = url; el.loading = "lazy"; el.decoding = "async";
+          el.alt = nft.name || "";
+        }
+
+        cell.appendChild(el);
+
+        // Click → highlight
+        cell.addEventListener("click", () => {
+          grid.querySelectorAll(".odin-preview-cell")
+              .forEach(c2 => c2.classList.remove("active-cell"));
+          cell.classList.add("active-cell");
+        });
+
+      } else {
+        // Case vide
+        cell.className = "odin-preview-cell preview-empty";
+        const ph = document.createElement("div");
+        ph.className = "preview-sold-out";
+        ph.textContent = "—";
+        cell.appendChild(ph);
+      } 
+
+      grid.appendChild(cell);
+    }
+  }
+
+  /* Watch for playerNfts to be set by main.js — déclenche même si 0 NFT OdinsDeck */
+  const watchInterval = setInterval(() => {
+    if (window.playerNftsReady) {
+      clearInterval(watchInterval);
+      buildCollectionUI();
+    }
+  }, 400);
+
+  /* Also tag each nft-card with data-category when odinsList changes */
+  const odinsList = document.getElementById("odinsList");
+  if (odinsList) {
+    const mo = new MutationObserver(() => {
+      if (window.playerNfts) {
+        // Tag cards with their category from playerNfts
+        const cards = odinsList.querySelectorAll(".nft-card");
+        cards.forEach((card, i) => {
+          const nft = window.playerNfts[i];
+          if (nft) card.dataset.category = nft._displayTrait || "unknown";
+        });
+        buildCollectionUI();
+      }
+    });
+    mo.observe(odinsList, { childList: true });
+  }
+
+  /* ── otherSearchWrap visibility mirror ── */
+  const otherNftSearch = document.getElementById("otherNftSearch");
+  const otherSearchWrap = document.getElementById("otherSearchWrap");
+  if (otherNftSearch && otherSearchWrap) {
+    const mo2 = new MutationObserver(() => {
+      otherSearchWrap.style.display = otherNftSearch.style.display === "none" ? "none" : "flex";
+    });
+    mo2.observe(otherNftSearch, { attributes: true, attributeFilter: ["style"] });
+  }
+
+});
+</script>
 </body>
 </html>
