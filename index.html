@@ -40,7 +40,7 @@
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
 
-  <script type="module" crossorigin src="./assets/index-CUDEMMZ-.js"></script>
+  <script type="module" crossorigin src="./assets/index-t4DCd1V_.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-CrHAFrKF.css">
 </head>
 
@@ -832,7 +832,7 @@
 <!-- ==    <div class="sf-links">
       <a href="https://x.com/Triskel_MvX" target="_blank" rel="noopener noreferrer">Built by Triskel</a>
       <a href="https://t.me/TriskelMultiversX" target="_blank" rel="noopener noreferrer">Telegram</a>
-      <a href="./images/rules.html" target="_blank">Rules</a>
+      <a href="./images/rules.html" target="_blank" rel="noopener">Rules</a>
     </div>== -->
   </div>
 
@@ -852,154 +852,11 @@
 
 
 
-<script>
-/* ══════════════════════════════════════════════════
-   ODINVERSE — Collection UI Enhancements
-   • 3×3 preview grid
-   • Category thumbnail strip
-   • Rewards accordion
-══════════════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", function () {
-
-  /* ── Rewards accordion ── */
-  const toggle = document.getElementById("odinsRewardsToggle");
-  const body   = document.getElementById("odinsRewardsBody");
-  const arrow  = document.getElementById("odinsRewardsArrow");
-  if (toggle && body) {
-    toggle.addEventListener("click", () => {
-      const open = body.classList.toggle("open");
-      if (arrow) arrow.classList.toggle("open", open);
-    });
-  }
-
-  /* ── Populate 3×3 preview grid + category strip ──
-     Triggered when odinsList is populated (MutationObserver)
-     or when nftSectionOdins becomes visible.
-  */
-  function buildCollectionUI() {
-    /* La grid se charge depuis l'API publique, indépendamment
-       du nombre de NFTs OdinsDeck dans le wallet (0 inclus). */
-    const grid = document.getElementById("odinsPreviewGrid");
-    if (grid && !grid.dataset.built) {
-      grid.dataset.built = "1";
-      loadGridPreview(grid);
-    }
-  }
-
-  /* ── loadGridPreview — API publique MultiversX, 9 NFTs aléatoires ── */
-  async function loadGridPreview(grid) {
-    grid.innerHTML = "";
-
-    // 👁️ Observer pause/play pour les vidéos (performance mobile)
-    const observer = new IntersectionObserver(
-      entries => entries.forEach(entry => {
-        const el = entry.target;
-        if (el.tagName === "VIDEO") {
-          entry.isIntersecting ? el.play().catch(() => {}) : el.pause();
-        }
-      }),
-      { threshold: 0.2 }
-    );
-
-    let picked = [];
-
-    try {
-      const res = await fetch(
-        "https://api.multiversx.com/nfts?collection=ODINSDECK-4e300a&size=100"
-      );
-      if (res.ok) {
-        const data = await res.json();
-        picked = data
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 6);   /* 3×2 = 6 NFTs */
-      }
-    } catch (err) {
-      console.warn("Grid preview load error:", err);
-    }
-
-    // 6 slots : 3 colonnes × 2 lignes
-    for (let i = 0; i < 6; i++) {
-      const nft  = picked[i];
-      const cell = document.createElement("div");
-
-      if (nft) {
-        cell.className = "odin-preview-cell" + (i === 0 ? " active-cell" : "");
-        const media = nft.media?.[0];
-        const url   = media?.originalUrl || media?.url || nft.url || "";
-        if (nft.name) cell.dataset.name = nft.name;
-
-        let el;
-        if (media?.fileType?.startsWith("video") || /\.(mp4|webm|ogg)$/i.test(url)) {
-          el = document.createElement("video");
-          el.src = url;
-          el.autoplay = true; el.loop = true; el.muted = true;
-          el.playsInline = true; el.preload = "metadata";
-          el.disablePictureInPicture = true; el.controls = false;
-          observer.observe(el);
-        } else {
-          el = document.createElement("img");
-          el.src = url; el.loading = "lazy"; el.decoding = "async";
-          el.alt = nft.name || "";
-        }
-
-        cell.appendChild(el);
-
-        // Click → highlight
-        cell.addEventListener("click", () => {
-          grid.querySelectorAll(".odin-preview-cell")
-              .forEach(c2 => c2.classList.remove("active-cell"));
-          cell.classList.add("active-cell");
-        });
-
-      } else {
-        // Case vide
-        cell.className = "odin-preview-cell preview-empty";
-        const ph = document.createElement("div");
-        ph.className = "preview-sold-out";
-        ph.textContent = "—";
-        cell.appendChild(ph);
-      } 
-
-      grid.appendChild(cell);
-    }
-  }
-
-  /* Watch for playerNfts to be set by main.js — déclenche même si 0 NFT OdinsDeck */
-  const watchInterval = setInterval(() => {
-    if (window.playerNftsReady) {
-      clearInterval(watchInterval);
-      buildCollectionUI();
-    }
-  }, 400);
-
-  /* Also tag each nft-card with data-category when odinsList changes */
-  const odinsList = document.getElementById("odinsList");
-  if (odinsList) {
-    const mo = new MutationObserver(() => {
-      if (window.playerNfts) {
-        // Tag cards with their category from playerNfts
-        const cards = odinsList.querySelectorAll(".nft-card");
-        cards.forEach((card, i) => {
-          const nft = window.playerNfts[i];
-          if (nft) card.dataset.category = nft._displayTrait || "unknown";
-        });
-        buildCollectionUI();
-      }
-    });
-    mo.observe(odinsList, { childList: true });
-  }
-
-  /* ── otherSearchWrap visibility mirror ── */
-  const otherNftSearch = document.getElementById("otherNftSearch");
-  const otherSearchWrap = document.getElementById("otherSearchWrap");
-  if (otherNftSearch && otherSearchWrap) {
-    const mo2 = new MutationObserver(() => {
-      otherSearchWrap.style.display = otherNftSearch.style.display === "none" ? "none" : "flex";
-    });
-    mo2.observe(otherNftSearch, { attributes: true, attributeFilter: ["style"] });
-  }
-
-});
-</script>
+<!-- ℹ️ L'ancien <script> inline "Collection UI Enhancements" (accordion,
+     grille preview, miroir de recherche) a été rapatrié dans main.js
+     (fonctions initRewardsAccordion / loadCollectionGridPreview /
+     initCollectionCardTagging / initOtherSearchMirror). Le polling
+     setInterval(400ms) a été remplacé par l'événement
+     "odin:playerNftsReady". Toute la logique JS vit désormais dans main.js. -->
 </body>
 </html>
