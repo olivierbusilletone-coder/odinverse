@@ -69,25 +69,6 @@
 }
 .sf-toggle-btn:hover { background: var(--gold-main, #ffcc33); color: #06110b; }
 
-/* Bouton vider l'historique */
-.sf-clear-btn {
-  padding: 8px 14px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-soft, rgba(255,255,255,0.6));
-  background: transparent;
-  border: 1px solid var(--border-soft, rgba(255,255,255,0.12));
-  border-radius: 10px;
-  cursor: pointer;
-  transition: border-color .2s, color .2s;
-}
-.sf-clear-btn:hover { border-color: #ff8b8b; color: #ff8b8b; }
-.sf-toggle-btn:focus-visible,
-.sf-clear-btn:focus-visible {
-  outline: 2px solid var(--gold-main, #ffcc33);
-  outline-offset: 2px;
-}
-
 /* Compteurs de session */
 .sf-session-stats {
   display: flex;
