@@ -1,0 +1,367 @@
+/* ============================================================================
+   sales-feed.css — Live NFT Sales Feed (section 06)
+   S'appuie sur les variables du thème Odinverse définies dans styles.css :
+   --gold-main, --green-main, --bg-dark-1/2, --border-soft, --card-radius…
+   ========================================================================= */
+
+#salesFeedSection { scroll-margin-top: 90px; }
+
+/* ── En-tête de contrôle ── */
+.sf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 22px;
+  padding: 14px 18px;
+  background: var(--bg-dark-2, rgba(10, 22, 16, 0.96));
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.08));
+  border-radius: var(--card-radius, 18px);
+}
+
+/* Balise LIVE */
+.sf-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  color: var(--gold-main, #ffcc33);
+}
+.sf-live-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #666;
+  box-shadow: 0 0 0 0 rgba(125, 255, 178, 0.5);
+}
+.sf-live-dot.live {
+  background: var(--green-main, #7dffb2);
+  animation: sfPulse 1.8s ease-out infinite;
+}
+.sf-live-dot.scan {
+  background: var(--gold-main, #ffcc33);
+  animation: sfPulse 0.9s ease-out infinite;
+}
+.sf-live-dot.paused { background: #8a8a8a; animation: none; }
+
+@keyframes sfPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(125, 255, 178, 0.55); }
+  100% { box-shadow: 0 0 0 12px rgba(125, 255, 178, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sf-live-dot { animation: none !important; }
+}
+
+/* Filtres */
+.sf-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.sf-filter-chip {
+  padding: 7px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-soft, rgba(255,255,255,0.75));
+  background: transparent;
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.12));
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.sf-filter-chip:hover { border-color: var(--green-main, #7dffb2); color: #fff; }
+.sf-filter-chip.active {
+  color: #06110b;
+  background: var(--green-main, #7dffb2);
+  border-color: var(--green-main, #7dffb2);
+}
+.sf-filter-chip:focus-visible,
+.sf-toggle-btn:focus-visible {
+  outline: 2px solid var(--gold-main, #ffcc33);
+  outline-offset: 2px;
+}
+
+/* Bouton pause */
+.sf-toggle-btn {
+  margin-left: auto;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold-main, #ffcc33);
+  background: transparent;
+  border: 1px solid var(--gold-deep, #d4a62a);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .2s, color .2s;
+}
+.sf-toggle-btn:hover { background: var(--gold-main, #ffcc33); color: #06110b; }
+
+/* Bouton vider l'historique */
+.sf-clear-btn {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-soft, rgba(255,255,255,0.6));
+  background: transparent;
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.12));
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.sf-clear-btn:hover { border-color: #ff8b8b; color: #ff8b8b; }
+.sf-clear-btn:focus-visible {
+  outline: 2px solid var(--gold-main, #ffcc33);
+  outline-offset: 2px;
+}
+
+/* Compteurs de session */
+.sf-session-stats {
+  display: flex;
+  gap: 22px;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-soft, rgba(255,255,255,0.08));
+  font-size: 0.78rem;
+  color: var(--text-soft, rgba(255,255,255,0.6));
+}
+.sf-session-stats strong {
+  color: var(--green-main, #7dffb2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Liste des ventes ── */
+.sales-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 640px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-dark, #1b3a2a) transparent;
+}
+.sales-feed-list::-webkit-scrollbar { width: 6px; }
+.sales-feed-list::-webkit-scrollbar-thumb {
+  background: var(--green-dark, #1b3a2a);
+  border-radius: 3px;
+}
+
+/* État vide */
+.sales-feed-empty {
+  padding: 46px 20px;
+  text-align: center;
+  color: var(--text-soft, rgba(255,255,255,0.55));
+  border: 1px dashed var(--border-soft, rgba(255,255,255,0.1));
+  border-radius: var(--card-radius, 18px);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.sales-feed-empty .sf-rune {
+  display: block;
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+  color: var(--gold-main, #ffcc33);
+  opacity: 0.7;
+}
+
+/* ── Carte de vente ── */
+.salecard {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--bg-dark-1, rgba(22, 45, 34, 0.88));
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.08));
+  border-left: 3px solid var(--green-dark, #1b3a2a);
+  border-radius: 14px;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity .45s ease, transform .45s ease, border-color .2s;
+}
+.salecard--in { opacity: 1; transform: translateY(0); }
+.salecard:hover { border-color: var(--green-main, #7dffb2); }
+
+/* Liseré par type d'événement */
+.salecard[data-method="buy"],
+.salecard[data-method="bulkbuy"],
+.salecard[data-method="buyswap"],
+.salecard[data-method="bulkswap"]      { border-left-color: var(--green-main, #7dffb2); }
+.salecard[data-method="mint"],
+.salecard[data-method="mintfrommachine"] { border-left-color: var(--gold-main, #ffcc33); }
+.salecard[data-method="bid"]           { border-left-color: #6fb7ff; }
+.salecard[data-method="acceptoffer"],
+.salecard[data-method="acceptglobaloffer"] { border-left-color: #c78bff; }
+.salecard[data-method="giveaway"]      { border-left-color: #ff8bd2; }
+
+/* Média */
+.salecard-media {
+  position: relative;
+  width: 72px; height: 72px;
+  border-radius: 10px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(125,255,178,0.12), transparent 70%),
+    var(--bg-dark-2, #0a1610);
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+.salecard-media img,
+.salecard-media video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.salecard-media.no-media img,
+.salecard-media.no-media video { display: none; }
+.salecard-media.no-media::after {
+  content: "ᛟ";
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-size: 1.6rem;
+  color: var(--gold-deep, #d4a62a);
+  opacity: 0.55;
+}
+.salecard-bulk {
+  position: absolute;
+  right: 3px; bottom: 3px;
+  padding: 1px 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #06110b;
+  background: var(--gold-main, #ffcc33);
+  border-radius: 6px;
+}
+
+/* Corps */
+.salecard-body { min-width: 0; }
+.salecard-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+.salecard-badge {
+  padding: 2px 9px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 6px;
+  color: #06110b;
+  background: var(--green-main, #7dffb2);
+}
+.salecard-badge--mint,
+.salecard-badge--mintfrommachine { background: var(--gold-main, #ffcc33); }
+.salecard-badge--bid             { background: #6fb7ff; }
+.salecard-badge--acceptoffer,
+.salecard-badge--acceptglobaloffer { background: #c78bff; }
+.salecard-badge--giveaway        { background: #ff8bd2; }
+
+.salecard-time {
+  font-size: 0.72rem;
+  color: var(--text-soft, rgba(255,255,255,0.5));
+  font-variant-numeric: tabular-nums;
+}
+
+.salecard-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main, #f5f5f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Route vendeur → acheteur */
+.salecard-route {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 0.78rem;
+  min-width: 0;
+}
+.salecard-actor {
+  color: var(--green-main, #7dffb2);
+  max-width: 42%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.salecard-arrow {
+  color: var(--gold-deep, #d4a62a);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.salecard-custom {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-soft, rgba(255,255,255,0.55));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Colonne droite : prix + liens */
+.salecard-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.salecard-price {
+  font-family: 'Cinzel', serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--gold-main, #ffcc33);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.salecard-token {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-soft, rgba(255,255,255,0.6));
+  letter-spacing: 0.05em;
+}
+.salecard-price--free { color: var(--green-main, #7dffb2); font-size: 0.85rem; }
+
+.salecard-links { display: flex; gap: 8px; }
+.salecard-links a {
+  display: grid;
+  place-items: center;
+  width: 26px; height: 26px;
+  font-size: 0.8rem;
+  color: var(--text-soft, rgba(255,255,255,0.6));
+  border: 1px solid var(--border-soft, rgba(255,255,255,0.1));
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color .2s, border-color .2s;
+}
+.salecard-links a:hover {
+  color: var(--gold-main, #ffcc33);
+  border-color: var(--gold-main, #ffcc33);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .salecard {
+    grid-template-columns: 56px 1fr;
+    grid-template-areas:
+      "media body"
+      "media side";
+  }
+  .salecard-media { grid-area: media; width: 56px; height: 56px; }
+  .salecard-body  { grid-area: body; }
+  .salecard-side  {
+    grid-area: side;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .sf-toggle-btn { margin-left: 0; }
+  .sales-feed-list { max-height: 520px; }
+}
