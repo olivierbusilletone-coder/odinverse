@@ -1,21 +1,26 @@
 /* ============================================================================
    sales-feed.js — Live NFT Sales Feed (portage navigateur de ScanNFTs_5_5.py)
    ============================================================================
-   Reprend la logique du scanner Telegram :
+   Logique portée du scanner Telegram :
    - Scan des fonctions buy / bid / bulkBuy / buySwap / bulkSwap / giveaway /
      acceptGlobalOffer / acceptOffer / mint / mintFromMachine   (scan_loop)
+   - Pagination + garde de progression si N txs partagent le même timestamp
+     (FIX B12)
+   - Suivi des transactions PENDING jusqu'à leur succès (pending_txs +
+     check_pending_transactions) — aucune tx perdue si elle est encore en
+     cours au moment du scan
+   - bid : NFT extrait du champ data base64 "bid@id@collectionHex@nonceHex",
+     nonce hex à longueur paire (extract_nft_from_bid_data + FIX B3)
+   - function vide → décodée depuis data base64 (FIX F4)
    - From/To reconstruits depuis le parcours réel du NFT dans operations[]
-     (derive_nft_route, FIX F1) + vendeur retrouvé via les payouts quand le
-     NFT sort de l'escrow marketplace (_seller_from_payouts, FIX F7)
-   - Paiements : EGLD vers smart contract ignoré (FIX F2), ESDT fongibles,
-     somme pour bulkBuy (extract_payments / get_main_payment)
-   - Résolution herotag avec cache TTL 1 h (resolve_herotag, FIX F3)
-   - Cache anti-doublons avec expiration (FIX Q3)
-   - Récap par collection au-delà de N NFTs par tx (FIX Q2)
-   - Throttle global des requêtes API (FIX R1)
-   - ★ NOUVEAU : historique persistant en localStorage — le flux, les
-     compteurs et le curseur survivent au refresh ; au rechargement le
-     scan reprend là où il s'était arrêté (rattrapage ≤ 1 h, sans doublons).
+     (derive_nft_route, FIX F1) + vendeur via les payouts en cas d'escrow
+     (_seller_from_payouts, FIX F7)
+   - Paiements : EGLD vers smart contract ignoré (FIX F2), somme bulkBuy
+   - Herotags avec cache TTL 1 h (FIX F3) ; anti-doublons TTL (FIX Q3) ;
+     récap par collection au-delà du seuil (FIX Q2) ; throttle global +
+     backoff exponentiel sur 429/erreur réseau (FIX R1 renforcé)
+   - withOperations=true sur les listes : pas de fetch de détail par tx
+   - Historique persistant en localStorage (cartes, compteurs, curseurs)
    ========================================================================= */
 
 (() => {
@@ -36,23 +41,6 @@ const FORBIDDEN_KEYWORDS = [
   "stake", "unstake", "staking", "listing", "listtoken", "unlist",
   "unlisting", "cancelstake", "withdrawstake", "withdraw",
 ];
-
-/* Collections suivies par le scanner (ScanNFTs_5_5.py → COLLECTIONS) */
-const WATCHED_COLLECTIONS = new Set([
-  "BLOOPX-1ced34","MADC-d03f58","WJX-31a722","HODL-ffb01b","CREATOROCX-b96f26",
-  "MAINSEASON-3db9f8","OCXSII-26bb89","GHOWLETS-7d3ebf","OWLETS-5446cd",
-  "SOCIUSOP-a1713e","BOOGAS-afc98d","EAPES-8f3c1f","SRB-61daf7","HYPEY-794a10",
-  "ZOMBIX-7dd9a4","VRSENYATH-4f2c95","VRSENYATH2-6b632c","UAC-406dab",
-  "FRUGLY-e6158a","R2L-6aa15e","BAXC-cdf74d","OAG-0eaf3b","EVCYB-aea8b4",
-  "EVOAG-1a4f7d","ANDRIANS-e6144d","MOS-b9b4b2","PROJECTF-7f9ae1",
-  "XPIXEL-c59b48","VICBITS-da9df7","KO7GF-044047","SUBJECTX-2c184d",
-  "BEEF-032185","MINIBOSSES-104b7f","SUPERVIC-f07785","HAMHAM-800c2e",
-  "HALLOVIC-b80f05","SVUACT0-e86669","ODINSDECK-4e300a","VRSKRAAD-d3e816",
-  "MINIKRAAD-bff059","OFT-01552b","SMARUGON-69bfc0",
-]);
-
-/* Collections Odinverse (groupe GROUP_ODIN dans le script) */
-const ODIN_COLLECTIONS = new Set(["ODINSDECK-4e300a", "OFT-01552b"]);
 
 /* Messages par ticker (collection_messages_by_ticker) */
 const COLLECTION_MESSAGES = {
@@ -83,12 +71,23 @@ const SEEN_TTL_MS         = 3600 * 1000;           // FIX Q3
 const HEROTAG_TTL_MS      = 3600 * 1000;           // FIX F3
 const MAX_NFT_CARDS_PER_TX = 6;                    // FIX Q2 (récap au-delà)
 const MAX_FEED_CARDS      = 50;
+const PAGE_SIZE           = 50;                    // comme le script Python
+const MAX_PAGES_PER_SCAN  = 4;                     // garde-fou pagination
+const PENDING_MAX_AGE_MS  = 15 * 60 * 1000;        // abandon d'un pending
+
+/* Rythme : FUNCTIONS_PER_CYCLE fonctions par cycle, chacune avec son
+   curseur → charge lissée, aucun événement raté. */
+const FUNCTIONS_PER_CYCLE = 3;
+
+/* Backoff sur 429 / erreur réseau : 5s → 10s → 20s → 40s → 60s max */
+const BACKOFF_BASE_MS = 5000;
+const BACKOFF_MAX_MS  = 60000;
 
 /* ★ Persistance */
-const STORAGE_KEY         = "odin_sales_feed_v1";
-const MAX_STORED_EVENTS   = MAX_FEED_CARDS;        // même plafond que le flux
-const MAX_LOOKBACK_SEC    = 3600;                  // rattrapage max après refresh
-const SAVE_DEBOUNCE_MS    = 600;
+const STORAGE_KEY       = "odin_sales_feed_v1";
+const MAX_STORED_EVENTS = MAX_FEED_CARDS;
+const MAX_LOOKBACK_SEC  = 3600;                    // rattrapage max après refresh
+const SAVE_DEBOUNCE_MS  = 600;
 
 const METHOD_LABELS = {
   buy: "Buy", mint: "Mint", bid: "Bid", bulkbuy: "Bulk Buy",
@@ -101,11 +100,12 @@ const METHOD_LABELS = {
 
 const state = {
   running: false,
-  filter: "watched",            // "odin" | "watched" | "all"
-  cursor: Math.floor(Date.now() / 1000) - 120,   // démarre 2 min en arrière
+  cursors: {},                  // curseur PAR fonction (scan tournant)
+  scanIdx: 0,                   // position dans la rotation
   seen: new Map(),              // txHash -> détecté à (ms)   (FIX Q3)
+  pending: new Map(),           // txHash -> ajouté à (ms)    (pending_txs)
   herotags: new Map(),          // addr -> {name, ts}         (FIX F3)
-  events: [],                   // ★ historique sérialisable (récent → ancien)
+  events: [],                   // historique sérialisable (récent → ancien)
   timer: null,
   eventsShown: 0,
   totalEgld: 0,
@@ -113,7 +113,12 @@ const state = {
   _storageOk: true,
 };
 
-/* === ★ PERSISTANCE (localStorage) ====================================== */
+function defaultCursor() {
+  return Math.floor(Date.now() / 1000) - 120;
+}
+for (const fn of SCAN_FUNCTIONS) state.cursors[fn] = defaultCursor();
+
+/* === PERSISTANCE (localStorage) ======================================== */
 
 let saveTimer = null;
 
@@ -121,23 +126,20 @@ function saveStateNow() {
   if (!state._storageOk) return;
   try {
     const payload = {
-      v: 1,
-      cursor: state.cursor,
-      filter: state.filter,
+      v: 2,
+      cursors: state.cursors,
       eventsShown: state.eventsShown,
       totalEgld: state.totalEgld,
-      /* seen : uniquement les hashes récents (FIX Q3 conservé au refresh) */
       seen: [...state.seen.entries()].filter(
         ([, t]) => Date.now() - t < SEEN_TTL_MS
       ),
-      /* herotags : cache réutilisé, borné */
+      pending: [...state.pending.entries()],
       herotags: [...state.herotags.entries()].slice(-200),
       events: state.events.slice(0, MAX_STORED_EVENTS),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch {
-    /* quota plein ou mode privé : on continue sans persistance */
-    state._storageOk = false;
+    state._storageOk = false;   // quota plein / mode privé : on continue sans
   }
 }
 
@@ -151,23 +153,24 @@ function loadState() {
   try {
     raw = localStorage.getItem(STORAGE_KEY);
   } catch {
-    state._storageOk = false;   // localStorage inaccessible (mode privé…)
+    state._storageOk = false;
     return;
   }
   if (!raw) return;
 
   let data;
   try { data = JSON.parse(raw); } catch { return; }
-  if (!data || data.v !== 1) return;
+  if (!data || (data.v !== 1 && data.v !== 2)) return;
 
-  state.filter      = ["odin", "watched", "all"].includes(data.filter)
-                        ? data.filter : "watched";
   state.eventsShown = Number(data.eventsShown) || 0;
   state.totalEgld   = Number(data.totalEgld) || 0;
 
   const now = Date.now();
   for (const [h, t] of data.seen || []) {
     if (now - t < SEEN_TTL_MS) state.seen.set(h, t);
+  }
+  for (const [h, t] of data.pending || []) {
+    if (now - t < PENDING_MAX_AGE_MS) state.pending.set(h, t);
   }
   for (const [addr, entry] of data.herotags || []) {
     if (entry && now - entry.ts < HEROTAG_TTL_MS) state.herotags.set(addr, entry);
@@ -177,11 +180,15 @@ function loadState() {
     ? data.events.slice(0, MAX_STORED_EVENTS)
     : [];
 
-  /* Curseur : on reprend où on s'était arrêté, mais jamais plus d'1 h en
-     arrière (le cache seen évite les doublons à la frontière). */
-  const nowSec = Math.floor(now / 1000);
-  const saved = Number(data.cursor) || 0;
-  state.cursor = Math.max(saved, nowSec - MAX_LOOKBACK_SEC);
+  /* Curseurs : reprise là où on s'était arrêté, plafonnée à 1 h en arrière
+     (le cache seen évite les doublons à la frontière). v1 : curseur global. */
+  const floor = Math.floor(now / 1000) - MAX_LOOKBACK_SEC;
+  const savedCursors = data.v === 2 && data.cursors ? data.cursors : {};
+  const legacy = Number(data.cursor) || 0;
+  for (const fn of SCAN_FUNCTIONS) {
+    const saved = Number(savedCursors[fn]) || legacy || 0;
+    state.cursors[fn] = Math.max(saved, floor);
+  }
 }
 
 function clearHistory() {
@@ -195,25 +202,39 @@ function clearHistory() {
   saveStateNow();
 }
 
-/* === HTTP THROTTLÉ (FIX R1) ============================================ */
+/* === HTTP THROTTLÉ (FIX R1) + BACKOFF ================================== */
 
 let lastRequestAt = 0;
 let httpChain = Promise.resolve();
+let failStreak = 0;
+let backoffUntil = 0;
 
 function throttledFetchJson(url) {
   const run = async () => {
+    const backoffWait = backoffUntil - Date.now();
+    if (backoffWait > 0) await new Promise(r => setTimeout(r, backoffWait));
     const wait = MIN_REQUEST_INTERVAL - (performance.now() - lastRequestAt);
     if (wait > 0) await new Promise(r => setTimeout(r, wait));
     lastRequestAt = performance.now();
+
     try {
-      const res = await fetch(url, { headers: { Accept: "application/json" } });
-      if (res.status === 429) {                       // rate-limit → on respire
-        await new Promise(r => setTimeout(r, 15000));
+      /* Pas d'en-tête custom : requête "simple" → aucun preflight OPTIONS */
+      const res = await fetch(url);
+      if (res.status === 429 || res.status >= 500) {
+        failStreak += 1;
+        backoffUntil = Date.now() +
+          Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
         return null;
       }
-      if (!res.ok) return null;
-      return await res.json();
+      if (!res.ok) return null;      // 404 etc. : réponse légitime
+      const json = await res.json();
+      failStreak = 0;
+      return json;
     } catch {
+      /* Réseau coupé ou 429 masqué en erreur CORS par le navigateur */
+      failStreak += 1;
+      backoffUntil = Date.now() +
+        Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
       return null;
     }
   };
@@ -257,6 +278,17 @@ function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   })[c]);
+}
+
+function decodeBase64(b64) {
+  try { return atob(b64); } catch { return null; }
+}
+
+function hexToUtf8(hex) {
+  try {
+    const bytes = hex.match(/.{2}/g).map(h => parseInt(h, 16));
+    return new TextDecoder().decode(new Uint8Array(bytes));
+  } catch { return null; }
 }
 
 /* FIX F7 : vendeur retrouvé via le plus gros payout SC → wallet */
@@ -362,7 +394,7 @@ async function resolveHerotag(address) {
     result = tag;
   }
   state.herotags.set(address, { name: result, ts: Date.now() });
-  saveState();                       // ★ le cache herotag survit au refresh
+  saveState();
   return result;
 }
 
@@ -370,7 +402,7 @@ function mediaThumb(identifier) {
   return `https://media.multiversx.com/nfts/thumbnail/${identifier}`;
 }
 
-/* FIX B10 : passerelles IPFS actives (cloudflare-ipfs.com fermée en 2024) */
+/* FIX B10 : passerelles IPFS actives */
 const IPFS_GATEWAYS = [
   "https://ipfs.io/ipfs/",
   "https://gateway.pinata.cloud/ipfs/",
@@ -378,11 +410,6 @@ const IPFS_GATEWAYS = [
   "https://w3s.link/ipfs/",
 ];
 
-function decodeBase64Url(b64) {
-  try { return atob(b64); } catch { return null; }
-}
-
-/* Liste ordonnée d'URLs à essayer pour un média (gateways IPFS → thumbnail) */
 function mediaCandidates(url, identifier) {
   const out = [];
   if (url) {
@@ -397,9 +424,7 @@ function mediaCandidates(url, identifier) {
   return out;
 }
 
-/* Portage de extract_media_url (ScanNFTs_5_5.py) :
-   1) media[].url / originalUrl / thumbnailUrl   2) nft.url direct
-   3) uris base64 décodées                       4) fallback thumbnail */
+/* Portage de extract_media_url : media[] → url → uris b64 → thumbnail */
 async function fetchNftMedia(identifier) {
   const nft = await throttledFetchJson(`${API_BASE}/nfts/${identifier}`);
   if (!nft) return null;
@@ -419,7 +444,7 @@ async function fetchNftMedia(identifier) {
   if (!url && nft.url && !nft.url.includes("default.png")) url = nft.url;
   if (!url && Array.isArray(nft.uris)) {
     for (const b64 of nft.uris) {
-      const decoded = decodeBase64Url(b64);
+      const decoded = decodeBase64(b64);
       if (decoded && !decoded.includes("default.png")) { url = decoded; break; }
     }
   }
@@ -436,38 +461,100 @@ function collectionMessage(collection) {
   return COLLECTION_MESSAGES[collection.split("-")[0]] || "";
 }
 
-function passesFilter(collection) {
-  if (state.filter === "all") return true;
-  if (!collection) return false;
-  return state.filter === "odin"
-    ? ODIN_COLLECTIONS.has(collection)
-    : WATCHED_COLLECTIONS.has(collection);
+/* === BID : extract_nft_from_bid_data (FIX B3) ========================== */
+/* Une enchère ne déplace PAS le NFT : aucune opération nft dans la tx.
+   L'identifier est reconstruit depuis le data : "bid@id@collectionHex@nonceHex"
+   avec un nonce hex à longueur PAIRE (535 → "0217", pas "217"). */
+function extractNftFromBidData(tx) {
+  const dataStr = decodeBase64(tx.data || "");
+  if (!dataStr) return null;
+
+  const parts = dataStr.split("@");
+  if (parts.length < 4 || parts[0] !== "bid") return null;
+
+  const collection = hexToUtf8(parts[2]);
+  if (!collection) return null;
+
+  const nonce = parseInt(parts[3], 16);
+  if (!Number.isFinite(nonce)) return null;
+
+  let nonceHex = nonce.toString(16);
+  if (nonceHex.length % 2) nonceHex = "0" + nonceHex;   // FIX B3
+
+  return {
+    collection,
+    identifier: `${collection}-${nonceHex}`,
+    value: formatEgld(tx.value || "0"),
+  };
 }
 
 /* === ANALYSE D'UNE TRANSACTION (analyze_and_send) ====================== */
 
-async function analyzeTx(txHash) {
-  const tx = await throttledFetchJson(`${API_BASE}/transactions/${txHash}`);
-  if (!tx || tx.status !== "success") return;
+/* Accepte un objet tx complet (liste withOperations=true : 0 requête) ou un
+   hash (fallback : 1 fetch de détail). En cas d'échec du fetch, le hash est
+   mis en pending pour ré-essai au cycle suivant — jamais perdu en silence. */
+async function analyzeTx(txOrHash) {
+  let tx = typeof txOrHash === "object" ? txOrHash : null;
+  const hash = tx ? tx.txHash : txOrHash;
 
-  const fn = (tx.function || "").toLowerCase();
+  const needsDetail =
+    !tx || (!Array.isArray(tx.operations) &&
+            (tx.function || "").toLowerCase() !== "bid");
+  if (needsDetail) {
+    tx = await throttledFetchJson(
+      `${API_BASE}/transactions/${hash}?withOperations=true`);
+    if (!tx) {
+      state.pending.set(hash, Date.now());   // ré-essai plus tard
+      return;
+    }
+  }
+
+  const status = (tx.status || "").toLowerCase();
+  if (status === "pending") {                // suivi comme le script Python
+    state.pending.set(tx.txHash, Date.now());
+    return;
+  }
+  if (status !== "success") return;
+
+  /* FIX F4 : function vide → décodée depuis le data base64 */
+  let fn = (tx.function || "").toLowerCase();
+  if (!fn) {
+    const decoded = decodeBase64(tx.data || "");
+    fn = (decoded || "").split("@")[0].slice(0, 32).toLowerCase();
+  }
   if (!ALLOWED_FUNCTIONS.has(fn)) return;
   if (FORBIDDEN_KEYWORDS.some(k => fn.includes(k))) return;
 
-  /* NFTs / SFTs réellement transférés dans la tx */
+  const payments = extractPayments(tx);
+  const mainPayment = getMainPayment(payments, fn);
+
+  /* --- bid : identifier reconstruit depuis le data (FIX 4.5 conservé) --- */
+  if (fn === "bid") {
+    const bidNft = extractNftFromBidData(tx);
+    if (!bidNft) return;
+    addSale({
+      txHash: tx.txHash, timestamp: tx.timestamp,
+      method: fn, identifier: bidNft.identifier, collection: bidNft.collection,
+      name: bidNft.identifier, bulkCount: 0,
+      fromErd: tx.sender,                    // l'enchérisseur
+      toErd: tx.receiver,                    // le SC d'enchères (résolu en nom)
+      fromName: null, toName: null,
+      payment: mainPayment ||
+        (bidNft.value > 0 ? { value: bidNft.value, token: "EGLD" } : null),
+    });
+    return;
+  }
+
+  /* --- Autres méthodes : NFTs réellement transférés ---------------------- */
   const nftOps = (tx.operations || []).filter(
     op => op.type === "nft" && op.identifier &&
           op.action !== "burn" && op.receiver
   );
   if (!nftOps.length) return;
 
-  /* Dédoublonnage par identifier */
   const byId = new Map();
   for (const op of nftOps) if (!byId.has(op.identifier)) byId.set(op.identifier, op);
   const identifiers = [...byId.keys()];
-
-  const payments = extractPayments(tx);
-  const mainPayment = getMainPayment(payments, fn);
 
   /* FIX Q2 : récap par collection au-delà du seuil */
   if (identifiers.length > MAX_NFT_CARDS_PER_TX) {
@@ -478,7 +565,6 @@ async function analyzeTx(txHash) {
       byCollection.get(coll).push(id);
     }
     for (const [coll, ids] of byCollection) {
-      if (!passesFilter(coll)) continue;
       const [fromErd, toErd] = deriveNftRoute(tx, ids[0]);
       addSale({
         txHash: tx.txHash, timestamp: tx.timestamp,
@@ -495,7 +581,6 @@ async function analyzeTx(txHash) {
   for (const id of identifiers) {
     const op = byId.get(id);
     const coll = op.collection || id.split("-").slice(0, 2).join("-");
-    if (!passesFilter(coll)) continue;
     const [fromErd, toErd] = deriveNftRoute(tx, id);
     addSale({
       txHash: tx.txHash, timestamp: tx.timestamp,
@@ -507,37 +592,93 @@ async function analyzeTx(txHash) {
   }
 }
 
+/* === SUIVI DES PENDING (check_pending_transactions) ==================== */
+
+async function checkPendingTransactions() {
+  if (!state.pending.size) return;
+
+  for (const [hash, addedAt] of [...state.pending.entries()]) {
+    if (Date.now() - addedAt > PENDING_MAX_AGE_MS) {
+      state.pending.delete(hash);            // trop vieux : abandon
+      continue;
+    }
+    const tx = await throttledFetchJson(
+      `${API_BASE}/transactions/${hash}?withOperations=true`);
+    if (!tx) continue;                       // ré-essai au prochain cycle
+
+    const status = (tx.status || "").toLowerCase();
+    if (status === "success") {
+      state.pending.delete(hash);
+      analyzeTx(tx).catch(() => {});
+    } else if (status === "invalid" || status === "fail" ||
+               status === "failed") {
+      state.pending.delete(hash);            // définitivement échouée
+    }
+    /* status pending : on laisse pour le prochain cycle */
+  }
+}
+
 /* === BOUCLE DE SCAN (scan_loop / scan_function) ======================== */
 
-async function scanFunction(fn, after) {
-  const url = `${API_BASE}/transactions?function=${fn}` +
-              `&after=${after}&size=25&order=asc&status=success`;
-  const txs = await throttledFetchJson(url);
-  if (!Array.isArray(txs)) return after;
+/* Pagination complète + garde de progression (FIX B12) : si une page
+   entière partage le même timestamp, le curseur avance de +1 s au lieu de
+   rester bloqué — plus aucune tx inatteignable derrière un pic d'activité.
+   Pas de filtre status : les pending sont détectées et suivies (FIX Q3). */
+async function scanFunction(fn) {
+  let pageStart = state.cursors[fn] ?? defaultCursor();
+  const initialStart = pageStart;
 
-  let last = after;
-  for (const tx of txs) {
-    const hash = tx.txHash;
-    const ts = tx.timestamp || 0;
-    if (!hash || ts <= after) continue;
-    last = Math.max(last, ts);
-    if (!state.seen.has(hash)) {
-      state.seen.set(hash, Date.now());          // FIX Q3
-      analyzeTx(hash).catch(() => {});
+  for (let page = 0; page < MAX_PAGES_PER_SCAN; page++) {
+    const url = `${API_BASE}/transactions?function=${fn}` +
+                `&after=${pageStart}&size=${PAGE_SIZE}&order=asc` +
+                `&withOperations=true`;
+    const txs = await throttledFetchJson(url);
+    if (!Array.isArray(txs) || !txs.length) break;
+
+    let lastTs = pageStart;
+    for (const tx of txs) {
+      const hash = tx.txHash;
+      const ts = tx.timestamp || 0;
+      if (!hash || ts <= initialStart) continue;
+      lastTs = Math.max(lastTs, ts);
+
+      if (!state.seen.has(hash)) {
+        state.seen.set(hash, Date.now());    // FIX Q3
+        const status = (tx.status || "").toLowerCase();
+        if (status === "pending") {
+          state.pending.set(hash, Date.now());
+        } else {
+          analyzeTx(tx).catch(() => {});     // objet complet : 0 requête
+        }
+      }
     }
+
+    /* FIX B12 : garantir la progression */
+    if (lastTs <= pageStart) {
+      if (txs.length >= PAGE_SIZE) { pageStart += 1; continue; }
+      break;
+    }
+    pageStart = lastTs;
+    if (txs.length < PAGE_SIZE) break;       // dernière page atteinte
   }
-  return last;
+
+  if (pageStart > initialStart) state.cursors[fn] = pageStart - 1;
 }
 
 async function scanCycle() {
   if (!state.running) return;
   setStatus("scan");
 
-  const results = await Promise.all(
-    SCAN_FUNCTIONS.map(fn => scanFunction(fn, state.cursor))
-  );
-  const valid = results.filter(r => r > state.cursor);
-  if (valid.length) state.cursor = Math.max(...valid) - 1;
+  /* Scan TOURNANT : FUNCTIONS_PER_CYCLE fonctions par cycle, chacune avec
+     son propre curseur — chaque fonction reprend là où ELLE s'était arrêtée. */
+  const batch = [];
+  for (let i = 0; i < FUNCTIONS_PER_CYCLE; i++) {
+    batch.push(SCAN_FUNCTIONS[state.scanIdx % SCAN_FUNCTIONS.length]);
+    state.scanIdx = (state.scanIdx + 1) % SCAN_FUNCTIONS.length;
+  }
+  for (const fn of batch) await scanFunction(fn);   // séquentiel : charge lissée
+
+  await checkPendingTransactions();
 
   /* Purge du cache seen (FIX Q3) */
   const cutoff = Date.now() - SEEN_TTL_MS;
@@ -545,7 +686,7 @@ async function scanCycle() {
 
   refreshTimes();
   setStatus("live");
-  saveState();                                   // ★ curseur + seen persistés
+  saveState();                               // curseurs + seen + pending
   state.timer = setTimeout(scanCycle, LOOP_DELAY_MS);
 }
 
@@ -573,9 +714,7 @@ function updateCounters() {
   if (vol) vol.textContent = formatAmount(state.totalEgld);
 }
 
-/* Affiche le média d'une carte avec chaîne de secours :
-   vrai média (via gateways IPFS si besoin) → thumbnail → rune ᛟ.
-   Rend une <video> muette en boucle si le fichier est une vidéo. */
+/* Média : vrai fichier (gateways IPFS si besoin) → thumbnail → rune ᛟ */
 function setCardMedia(card, rec) {
   const wrap = card.querySelector(".salecard-media");
   if (!wrap) return;
@@ -595,7 +734,7 @@ function setCardMedia(card, rec) {
     el.loop = true;
     el.autoplay = true;
     el.playsInline = true;
-    el.setAttribute("muted", "");        // requis pour l'autoplay iOS
+    el.setAttribute("muted", "");
     el.setAttribute("playsinline", "");
     el.poster = mediaThumb(rec.identifier);
   } else {
@@ -609,24 +748,22 @@ function setCardMedia(card, rec) {
   el.addEventListener("error", () => {
     idx += 1;
     if (idx < candidates.length) {
-      el.src = candidates[idx];          // gateway IPFS suivante / thumbnail
+      el.src = candidates[idx];
     } else {
       el.remove();
-      wrap.classList.add("no-media");    // placeholder rune ᛟ
+      wrap.classList.add("no-media");
     }
   });
 
   wrap.prepend(el);
 }
 
-/* Récupère le vrai média (et le vrai nom si absent) puis met à jour la
-   carte + l'historique persistant. Une seule requête par NFT : le résultat
-   est stocké dans l'enregistrement, donc réutilisé après un refresh. */
+/* Récupère le vrai média (une seule fois par NFT, persisté avec la carte) */
 async function upgradeMedia(rec, card) {
   if (rec.mediaUrl) return;
   const info = await fetchNftMedia(rec.identifier);
   if (!info) {
-    rec.mediaUrl = mediaThumb(rec.identifier);  // ne pas réessayer en boucle
+    rec.mediaUrl = mediaThumb(rec.identifier);
     saveState();
     return;
   }
@@ -634,7 +771,6 @@ async function upgradeMedia(rec, card) {
   rec.mediaUrl = info.url;
   rec.mediaType = info.fileType || "";
 
-  /* Bonus : nom réel du NFT si l'opération n'en fournissait pas */
   if (info.name && !rec.bulkCount &&
       (!rec.name || rec.name === rec.identifier)) {
     rec.name = info.name;
@@ -642,7 +778,6 @@ async function upgradeMedia(rec, card) {
     if (nameEl) nameEl.textContent = info.name;
   }
 
-  /* Ne remplace l'élément que si le média diffère du thumbnail déjà affiché */
   if (rec.mediaUrl !== mediaThumb(rec.identifier)) setCardMedia(card, rec);
   saveState();
 }
@@ -691,12 +826,9 @@ function buildCard(rec, animate) {
       </div>
     </div>`;
 
-  /* Média : URL déjà connue (historique) sinon thumbnail immédiat,
-     puis upgrade vers le vrai média via /nfts/{identifier} */
   setCardMedia(card, rec);
   if (!rec.mediaUrl) upgradeMedia(rec, card);
 
-  /* Herotags manquants : résolution différée + mise à jour de l'historique */
   if (!rec.fromName) {
     resolveHerotag(rec.fromErd).then(n => {
       rec.fromName = n;
@@ -730,10 +862,10 @@ function addSale(rec) {
   state.eventsShown += 1;
   if (rec.payment?.token === "EGLD") state.totalEgld += rec.payment.value;
   updateCounters();
-  saveState();                                   // ★
+  saveState();
 }
 
-/* ★ Restaure l'historique sauvegardé (sans animation ni compteurs) */
+/* Restaure l'historique sauvegardé (sans animation ni compteurs) */
 function renderStoredEvents() {
   if (!feedEl || !state.events.length) return;
   if (emptyEl) emptyEl.style.display = "none";
@@ -748,10 +880,10 @@ function renderStoredEvents() {
 function start() {
   if (state.running) return;
   state.running = true;
-  state.cursor = Math.max(
-    state.cursor,
-    Math.floor(Date.now() / 1000) - MAX_LOOKBACK_SEC
-  );
+  const floor = Math.floor(Date.now() / 1000) - MAX_LOOKBACK_SEC;
+  for (const fn of SCAN_FUNCTIONS) {
+    state.cursors[fn] = Math.max(state.cursors[fn] ?? defaultCursor(), floor);
+  }
   toggleBtn.textContent = "⏸ Pause";
   setStatus("live");
   scanCycle();
@@ -773,21 +905,8 @@ function initSalesFeed() {
   toggleBtn = $("sfToggleBtn");
   if (!feedEl) return;
 
-  /* ★ Restauration avant tout */
   loadState();
   renderStoredEvents();
-
-  /* Filtre actif restauré sur les chips */
-  document.querySelectorAll(".sf-filter-chip").forEach(chip => {
-    chip.classList.toggle("active", chip.dataset.filter === state.filter);
-    chip.addEventListener("click", () => {
-      document.querySelectorAll(".sf-filter-chip")
-        .forEach(c => c.classList.remove("active"));
-      chip.classList.add("active");
-      state.filter = chip.dataset.filter;
-      saveState();
-    });
-  });
 
   toggleBtn.addEventListener("click", () => {
     if (state.running) { stop(); state._userPaused = true; }
@@ -799,7 +918,6 @@ function initSalesFeed() {
 
   setInterval(refreshTimes, 30000);
 
-  /* ★ Sauvegarde de dernière chance quand l'onglet se ferme / passe en fond */
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") saveStateNow();
   });

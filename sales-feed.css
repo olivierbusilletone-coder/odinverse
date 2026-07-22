@@ -54,32 +54,6 @@
   .sf-live-dot { animation: none !important; }
 }
 
-/* Filtres */
-.sf-filters { display: flex; gap: 8px; flex-wrap: wrap; }
-.sf-filter-chip {
-  padding: 7px 14px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--text-soft, rgba(255,255,255,0.75));
-  background: transparent;
-  border: 1px solid var(--border-soft, rgba(255,255,255,0.12));
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color .2s, color .2s, background .2s;
-}
-.sf-filter-chip:hover { border-color: var(--green-main, #7dffb2); color: #fff; }
-.sf-filter-chip.active {
-  color: #06110b;
-  background: var(--green-main, #7dffb2);
-  border-color: var(--green-main, #7dffb2);
-}
-.sf-filter-chip:focus-visible,
-.sf-toggle-btn:focus-visible {
-  outline: 2px solid var(--gold-main, #ffcc33);
-  outline-offset: 2px;
-}
-
 /* Bouton pause */
 .sf-toggle-btn {
   margin-left: auto;
@@ -108,6 +82,7 @@
   transition: border-color .2s, color .2s;
 }
 .sf-clear-btn:hover { border-color: #ff8b8b; color: #ff8b8b; }
+.sf-toggle-btn:focus-visible,
 .sf-clear-btn:focus-visible {
   outline: 2px solid var(--gold-main, #ffcc33);
   outline-offset: 2px;
