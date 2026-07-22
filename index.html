@@ -39,9 +39,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
+  <!-- Live NFT Sales Feed (portage web de ScanNFTs_5_5.py) -->
 
-  <script type="module" crossorigin src="./assets/index-CEDqWN1d.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CrHAFrKF.css">
+  <script type="module" crossorigin src="./assets/index-D9rpND3I.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CJdey4i_.css">
 </head>
 
 <body>
@@ -673,6 +674,53 @@
 
 </div><!-- /mainTabContents -->
 
+</div><!-- /.tabs-and-content (fermeture manquante : le navigateur la déduisait au </main>) -->
+
+<!-- ══════════════════════════════════
+     06 — LIVE SALES FEED
+     Portage navigateur du scanner ScanNFTs_5_5.py :
+     détection en direct des achats / mints / offres NFT sur MultiversX
+     (mêmes fonctions scannées, même logique From/To et paiements).
+══════════════════════════════════ -->
+<div class="section" id="salesFeedSection">
+  <div class="section-header fade-in">
+    <div class="section-num">06</div>
+    <div>
+      <div class="section-title">ᚱᚨᛁᛞ - LIVE SALES - ᛞᛁᚨᚱ<small>On-chain NFT activity · MultiversX · Real time</small></div>
+    </div>
+  </div>
+
+  <!-- Barre de contrôle -->
+  <div class="sf-controls">
+    <span class="sf-live">
+      <span class="sf-live-dot paused" id="sfLiveDot"></span>
+      <span id="sfLiveText">PAUSED</span>
+    </span>
+
+    <div class="sf-filters" role="group" aria-label="Collection filter">
+      <button class="sf-filter-chip" data-filter="odin">⚔️ Odinverse</button>
+      <button class="sf-filter-chip active" data-filter="watched">🛡 Watched collections</button>
+      <button class="sf-filter-chip" data-filter="all">🌍 All MultiversX</button>
+    </div>
+
+    <button class="sf-toggle-btn" id="sfToggleBtn">▶ Resume</button>
+    <button class="sf-clear-btn" id="sfClearBtn" title="Clear saved history">🗑 Clear</button>
+
+    <div class="sf-session-stats">
+      <span>Events this session: <strong id="sfCountEvents">0</strong></span>
+      <span>EGLD volume seen: <strong id="sfCountVolume">0</strong></span>
+    </div>
+  </div>
+
+  <!-- Flux -->
+  <div class="sales-feed-list" id="salesFeedList" aria-live="polite"></div>
+  <div class="sales-feed-empty" id="salesFeedEmpty">
+    <span class="sf-rune">ᛟ</span>
+    Watching the chain… New buys, mints, bids and offers will appear here
+    the moment they land on MultiversX.
+  </div>
+</div>
+
 </main>
 
 <!-- MODAL -->
@@ -838,6 +886,7 @@
 
 </footer>
 
+<script src="./sales-feed.js" defer></script>
 <!-- ℹ️ Scripts Firebase "compat" retirés : main.js importe déjà le SDK
      modulaire (firebase/app, firebase/firestore) via npm. Le double
      chargement ajoutait ~200 Ko de JS jamais exécuté. -->
