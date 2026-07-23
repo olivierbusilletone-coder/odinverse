@@ -41,8 +41,8 @@
   <!-- CSS externe (anciennement <style> inline, ~6400 lignes) -->
   <!-- Live NFT Sales Feed (portage web de ScanNFTs_5_5.py) -->
 
-  <script type="module" crossorigin src="./assets/index-B4DN2MIZ.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B7zq8Wzs.css">
+  <script type="module" crossorigin src="./assets/index-C5v3Tk0y.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C6cCpnKQ.css">
 </head>
 
 <body>
@@ -102,6 +102,11 @@
     <a href="#postConnectActions" class="nav-link nav-link--mint">
       <span class="nav-rune">ᛗ</span>
       <span class="nav-text">Mint</span>
+    </a>
+	<span class="nav-sep">᛭</span>
+    <a href="#salesFeedSection" class="nav-link">
+      <span class="nav-rune">ᚨ</span>
+      <span class="nav-text">Live Sales</span>
     </a>
   </nav>
 
@@ -683,10 +688,18 @@
      (mêmes fonctions scannées, même logique From/To et paiements).
 ══════════════════════════════════ -->
 <div class="section" id="salesFeedSection">
-  <div class="section-header fade-in">
-    <div class="section-num">LIVE</div>
+  <div class="section-header fade-in sf-header">
+    <div class="section-num sf-num" aria-hidden="true">LIVE</div>
     <div>
-      <div class="section-title">ᚱᚨᛁᛞ - LIVE SALES - ᛞᛁᚨᚱ<small>On-chain NFT activity · MultiversX · Real time</small></div>
+      <div class="section-title sf-title">
+        <span class="sf-title-line">
+          <span class="sf-title-rune sf-title-rune--l" aria-hidden="true">ᚱᚨᛁᛞ</span>
+          <span class="sf-title-text">LIVE SALES</span>
+          <span class="sf-title-rune sf-title-rune--r" aria-hidden="true">ᛞᛁᚨᚱ</span>
+        </span>
+        <span class="sf-blade" aria-hidden="true"></span>
+        <small>On-chain NFT activity · MultiversX · Real time</small>
+      </div>
     </div>
   </div>
 

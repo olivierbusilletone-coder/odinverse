@@ -66,7 +66,8 @@ const LOOP_DELAY_MS       = 9000;
 const MIN_REQUEST_INTERVAL = 650;                  // FIX R1 (~1.5 req/s)
 const SEEN_TTL_MS         = 3600 * 1000;           // FIX Q3
 const HEROTAG_TTL_MS      = 3600 * 1000;           // FIX F3
-const MAX_NFT_CARDS_PER_TX = 6;                    // FIX Q2
+/* FIX Q2 : remplacé par le regroupement systématique par collection
+   dès 2 NFTs par transaction (voir analyzeTx). */
 const MAX_FEED_CARDS      = 50;
 const PAGE_SIZE           = 50;
 const MAX_PAGES_PER_SCAN  = 4;
@@ -686,8 +687,12 @@ async function analyzeTx(txOrHash) {
   for (const op of nftOps) if (!byId.has(op.identifier)) byId.set(op.identifier, op);
   const identifiers = [...byId.keys()];
 
-  /* FIX Q2 */
-  if (identifiers.length > MAX_NFT_CARDS_PER_TX) {
+  /* Regroupement : dès que la tx déplace PLUSIEURS NFTs, une seule carte
+     par collection avec badge ×N et prix total — au lieu d'une carte par
+     NFT (ex. buy de 2 NFTs = 1 carte "×2"). Couvre aussi FIX Q2 : le
+     nombre de cartes est borné par le nombre de collections, plus par le
+     nombre de NFTs. */
+  if (identifiers.length > 1) {
     const byCollection = new Map();
     for (const id of identifiers) {
       const coll = byId.get(id).collection || id.split("-").slice(0, 2).join("-");
@@ -714,11 +719,14 @@ async function analyzeTx(txOrHash) {
       else if (toAddrs.size > 1) toName = `Multiple (${toAddrs.size} buyers)`;
       else toErd = fbTo;
 
+      const single = ids.length === 1;
       emitSale({
         txHash: tx.txHash, timestamp: tx.timestamp,
         method: fn, identifier: ids[0], collection: coll,
-        name: `${coll.split("-")[0]} × ${ids.length} NFTs`,
-        bulkCount: ids.length,
+        /* Collection isolée dans une tx multi-collections → carte normale */
+        name: single ? (byId.get(ids[0]).name || ids[0])
+                     : `${coll.split("-")[0]} × ${ids.length} NFTs`,
+        bulkCount: single ? 0 : ids.length,
         fromErd, toErd, fromName, toName,
         /* Prix total sur le 1er récap uniquement (Python: first_recap) —
            sinon le volume EGLD est compté N fois par les compteurs. */
