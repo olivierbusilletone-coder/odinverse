@@ -881,41 +881,58 @@ function setCardMedia(card, rec) {
   if (!wrap) return;
 
   const candidates = mediaCandidates(rec.mediaUrl, rec.identifier);
-  const isVideo =
+  const thumb = mediaThumb(rec.identifier);
+  const wantVideo =
     (rec.mediaType || "").startsWith("video") ||
     /\.(mp4|webm|mov)(\?|$)/i.test(rec.mediaUrl || "");
 
   wrap.classList.remove("no-media");
   wrap.querySelectorAll("img,video").forEach(n => n.remove());
 
-  let el;
-  if (isVideo) {
-    el = document.createElement("video");
-    el.muted = true;
-    el.loop = true;
-    el.autoplay = true;
-    el.playsInline = true;
-    el.setAttribute("muted", "");
-    el.setAttribute("playsinline", "");
-    el.poster = mediaThumb(rec.identifier);
-  } else {
-    el = document.createElement("img");
-    el.loading = "lazy";
-    el.alt = rec.name || rec.identifier;
-  }
+  const makeEl = video => {
+    let el;
+    if (video) {
+      el = document.createElement("video");
+      el.muted = true;
+      el.loop = true;
+      el.autoplay = true;
+      el.playsInline = true;
+      el.setAttribute("muted", "");
+      el.setAttribute("playsinline", "");
+      el.poster = thumb;
+    } else {
+      el = document.createElement("img");
+      el.loading = "lazy";
+      el.alt = rec.name || rec.identifier;
+    }
+    return el;
+  };
 
   let idx = 0;
-  el.src = candidates[idx];
-  el.addEventListener("error", () => {
+  let el = makeEl(wantVideo && candidates[0] !== thumb);
+
+  const onError = () => {
     idx += 1;
-    if (idx < candidates.length) {
-      el.src = candidates[idx];
-    } else {
+    if (idx >= candidates.length) {
       el.remove();
       wrap.classList.add("no-media");
+      return;
     }
-  });
+    /* Le thumbnail officiel (dernier candidat) est une IMAGE : si le média
+       est une vidéo dont toutes les passerelles ont échoué, on bascule sur
+       <img> au lieu de laisser le <video> échouer sur une image. */
+    const needVideo = wantVideo && candidates[idx] !== thumb;
+    if ((el.tagName === "VIDEO") !== needVideo) {
+      const next = makeEl(needVideo);
+      next.addEventListener("error", onError);
+      el.replaceWith(next);
+      el = next;
+    }
+    el.src = candidates[idx];
+  };
 
+  el.addEventListener("error", onError);
+  el.src = candidates[idx];
   wrap.prepend(el);
 }
 
