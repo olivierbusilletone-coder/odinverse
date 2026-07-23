@@ -296,7 +296,11 @@ function sellerFromPayouts(tx, buyerErd) {
 }
 
 /* FIX F1 */
-function deriveNftRoute(tx, identifier) {
+const F7_METHODS = new Set([
+  "buy", "bulkbuy", "buyswap", "bulkswap", "acceptoffer", "acceptglobaloffer",
+]);
+
+function deriveNftRoute(tx, identifier, methodClean) {
   const ops = (tx.operations || []).filter(
     op => op.type === "nft" && op.identifier === identifier
   );
@@ -309,7 +313,13 @@ function deriveNftRoute(tx, identifier) {
     receivers[receivers.length - 1] || null;
 
   let fromErd = senders.find(s => !isSmartContract(s)) || null;
-  if (!fromErd) fromErd = sellerFromPayouts(tx, toErd);      // FIX F7
+  /* FIX F7 : uniquement pour les VENTES (NFT en escrow → payout au vendeur).
+     Sur un mint/giveaway, les payouts sortant du SC sont des royalties ou
+     parts créateur, PAS un vendeur → on garde le SC comme From (résolu via
+     KNOWN_ADDRESSES, ex. "Boogas Caveman Mint"), comme le Python 5.4. */
+  if (!fromErd && F7_METHODS.has(methodClean || "")) {
+    fromErd = sellerFromPayouts(tx, toErd);
+  }
   if (!fromErd) fromErd = senders[0] || null;
 
   return [fromErd, toErd];
@@ -654,7 +664,11 @@ async function analyzeTx(txOrHash) {
       txHash: tx.txHash, timestamp: tx.timestamp,
       method: fn, identifier: bidNft.identifier, collection: bidNft.collection,
       name: bidNft.identifier, bulkCount: 0,
-      fromErd: tx.sender, toErd: tx.receiver,
+      /* Fallback FIX F1 (Python) : le NFT n'a pas encore bougé sur un bid →
+         From = tx.receiver (listing / marketplace), To = tx.sender
+         (l'enchérisseur qui recevra le NFT). L'ancien code affichait
+         l'inverse (sender → receiver), soit le bug corrigé par F1. */
+      fromErd: tx.receiver, toErd: tx.sender,
       fromName: null, toName: null,
       payment: mainPayment ||
         (bidNft.value > 0 ? { value: bidNft.value, token: "EGLD" } : null),
@@ -680,32 +694,61 @@ async function analyzeTx(txOrHash) {
       if (!byCollection.has(coll)) byCollection.set(coll, []);
       byCollection.get(coll).push(id);
     }
+    /* Fallback FIX F1 si aucune opération NFT exploitable */
+    const fbFrom = fn === "giveaway" ? tx.sender : tx.receiver;
+    const fbTo   = fn === "giveaway" ? tx.receiver : tx.sender;
+
+    let firstRecap = true;
     for (const [coll, ids] of byCollection) {
-      const [fromErd, toErd] = deriveNftRoute(tx, ids[0]);
+      /* FIX F6 : route réelle par collection. Plusieurs vendeurs/acheteurs
+         distincts (ex. bulkBuy multi-listings) → "Multiple". */
+      const routes = ids.map(id => deriveNftRoute(tx, id, fn));
+      const fromAddrs = new Set(routes.map(r => r[0]).filter(Boolean));
+      const toAddrs   = new Set(routes.map(r => r[1]).filter(Boolean));
+
+      let fromErd = null, toErd = null, fromName = null, toName = null;
+      if (fromAddrs.size === 1) fromErd = [...fromAddrs][0];
+      else if (fromAddrs.size > 1) fromName = `Multiple (${fromAddrs.size} sellers)`;
+      else fromErd = fbFrom;
+      if (toAddrs.size === 1) toErd = [...toAddrs][0];
+      else if (toAddrs.size > 1) toName = `Multiple (${toAddrs.size} buyers)`;
+      else toErd = fbTo;
+
       emitSale({
         txHash: tx.txHash, timestamp: tx.timestamp,
         method: fn, identifier: ids[0], collection: coll,
         name: `${coll.split("-")[0]} × ${ids.length} NFTs`,
         bulkCount: ids.length,
-        fromErd, toErd, fromName: null, toName: null,
-        payment: mainPayment,
+        fromErd, toErd, fromName, toName,
+        /* Prix total sur le 1er récap uniquement (Python: first_recap) —
+           sinon le volume EGLD est compté N fois par les compteurs. */
+        payment: firstRecap ? mainPayment : null,
       });
+      firstRecap = false;
     }
     return;
   }
 
-  for (const id of identifiers) {
+  identifiers.forEach((id, idx) => {
     const op = byId.get(id);
     const coll = op.collection || id.split("-").slice(0, 2).join("-");
-    const [fromErd, toErd] = deriveNftRoute(tx, id);
+    let [fromErd, toErd] = deriveNftRoute(tx, id, fn);
+    /* Fallback FIX F1 (Python) : aucune opération NFT exploitable →
+       giveaway = (sender, receiver), sinon (receiver, sender). */
+    if (!fromErd && !toErd) {
+      fromErd = fn === "giveaway" ? tx.sender : tx.receiver;
+      toErd   = fn === "giveaway" ? tx.receiver : tx.sender;
+    }
     emitSale({
       txHash: tx.txHash, timestamp: tx.timestamp,
       method: fn, identifier: id, collection: coll,
       name: op.name || id, bulkCount: 0,
       fromErd, toErd, fromName: null, toName: null,
-      payment: identifiers.length > 1 && fn === "bulkbuy" ? null : mainPayment,
+      /* Python : prix affiché sur le 1er NFT de la tx uniquement — évite
+         le double comptage du volume EGLD et l'affichage répété. */
+      payment: idx === 0 ? mainPayment : null,
     });
-  }
+  });
 }
 
 /* Routeur : Firestore en mode partagé, affichage direct en mode local */
