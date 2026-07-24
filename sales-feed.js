@@ -19,6 +19,30 @@
    route NFT réelle (FIX F1/F7), paiements filtrés (FIX F2), herotags
    TTL 1 h (FIX F3), anti-doublons TTL (FIX Q3), récap bulk (FIX Q2),
    throttle + backoff (FIX R1), withOperations=true, médias (FIX B10).
+
+   ★★★ FIX 5.6 — TRANSACTIONS MANQUANTES (parité avec ScanNFTs_5_4.py) :
+   F8.  La liste /transactions?withOperations=true renvoie parfois une tx
+        SUCCESS avec `operations` vide/absent (retard d'indexation ou champ
+        tronqué). L'ancien code concluait "0 NFT" et la tx — déjà dans
+        `seen` — était PERDUE À JAMAIS. Le Python, lui, re-fetch TOUJOURS le
+        détail /transactions/{hash}. → Désormais : détail re-fetché si
+        operations est vide, et si le détail est encore sans opération NFT,
+        la tx repasse par le circuit `pending` (retry jusqu'à 15 min) au
+        lieu d'être abandonnée. C'était la cause n°1 des tx manquantes.
+   F9.  throttledFetchJson ne ré-essayait JAMAIS (le Python fait
+        max_retries=3) : un seul 429/5xx et la page de scan était sautée,
+        un seul échec sur le détail et la tx filait en pending (droppée
+        après 15 min si la congestion durait). → jusqu'à 3 tentatives par
+        requête, en conservant le backoff global.
+   F10. Mode partagé : si l'écriture Firestore était refusée (règles,
+        quota, offline), publishSale faisait `return` → la vente détectée
+        n'était affichée NULLE PART. → repli addSaleLocal (avec dédup si le
+        document arrive ensuite via snapshot).
+   F11. Couverture : 3 fonctions scannées / 9 s = chaque fonction vue
+        toutes les ~40-80 s (le Python scanne les 10 toutes les 5 s).
+        → 5 fonctions / 7 s (sweep complet en 2 cycles) + rattrapage
+        immédiat au retour d'onglet (visibilitychange), car les timers
+        des onglets cachés sont bridés par le navigateur.
    ========================================================================= */
 
 (() => {
@@ -62,7 +86,7 @@ const KNOWN_ADDRESSES = {
 };
 
 const SC_ADDRESS_PREFIX = "erd1qqqqqqqqqqqqq";     // FIX F1/F2
-const LOOP_DELAY_MS       = 9000;
+const LOOP_DELAY_MS       = 7000;                  // FIX F11 (était 9000)
 const MIN_REQUEST_INTERVAL = 650;                  // FIX R1 (~1.5 req/s)
 const SEEN_TTL_MS         = 3600 * 1000;           // FIX Q3
 const HEROTAG_TTL_MS      = 3600 * 1000;           // FIX F3
@@ -72,7 +96,8 @@ const MAX_FEED_CARDS      = 50;
 const PAGE_SIZE           = 50;
 const MAX_PAGES_PER_SCAN  = 4;
 const PENDING_MAX_AGE_MS  = 15 * 60 * 1000;
-const FUNCTIONS_PER_CYCLE = 3;
+const FUNCTIONS_PER_CYCLE = 5;                     // FIX F11 (était 3)
+const HTTP_RETRIES        = 2;                     // FIX F9 (≈ Python max_retries=3)
 const BACKOFF_BASE_MS = 5000;
 const BACKOFF_MAX_MS  = 60000;
 
@@ -101,6 +126,7 @@ const state = {
   scanIdx: 0,
   seen: new Map(),              // txHash -> détecté à (ms)   (FIX Q3)
   pending: new Map(),           // txHash -> ajouté à (ms)
+  retried: new Map(),           // txHash -> 1er "0 NFT op" à (ms) (FIX F8)
   herotags: new Map(),          // addr -> {name, ts}         (FIX F3)
   events: [],                   // mode LOCAL uniquement
   timer: null,
@@ -200,32 +226,37 @@ let httpChain = Promise.resolve();
 let failStreak = 0;
 let backoffUntil = 0;
 
-function throttledFetchJson(url) {
+function throttledFetchJson(url, retries = HTTP_RETRIES) {
   const run = async () => {
-    const backoffWait = backoffUntil - Date.now();
-    if (backoffWait > 0) await new Promise(r => setTimeout(r, backoffWait));
-    const wait = MIN_REQUEST_INTERVAL - (performance.now() - lastRequestAt);
-    if (wait > 0) await new Promise(r => setTimeout(r, wait));
-    lastRequestAt = performance.now();
+    /* FIX F9 : comme _sync_get() côté Python (max_retries=3), on ré-essaie
+       sur 429/5xx/erreur réseau au lieu d'abandonner au 1er échec — un seul
+       429 faisait sauter une page de scan ou expédiait la tx en pending. */
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const backoffWait = backoffUntil - Date.now();
+      if (backoffWait > 0) await new Promise(r => setTimeout(r, backoffWait));
+      const wait = MIN_REQUEST_INTERVAL - (performance.now() - lastRequestAt);
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+      lastRequestAt = performance.now();
 
-    try {
-      const res = await fetch(url);
-      if (res.status === 429 || res.status >= 500) {
+      try {
+        const res = await fetch(url);
+        if (res.status === 429 || res.status >= 500) {
+          failStreak += 1;
+          backoffUntil = Date.now() +
+            Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
+          continue;                     // ré-essai après le backoff
+        }
+        if (!res.ok) return null;       // 4xx ≠ 429 : définitif, inutile d'insister
+        const json = await res.json();
+        failStreak = 0;
+        return json;
+      } catch {
         failStreak += 1;
         backoffUntil = Date.now() +
           Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
-        return null;
       }
-      if (!res.ok) return null;
-      const json = await res.json();
-      failStreak = 0;
-      return json;
-    } catch {
-      failStreak += 1;
-      backoffUntil = Date.now() +
-        Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
-      return null;
     }
+    return null;
   };
   const p = httpChain.then(run, run);
   httpChain = p.catch(() => {});
@@ -507,6 +538,10 @@ async function publishSale(rec) {
     await fb.setDoc(ref, cleanRecord(rec), { merge: true });
   } catch (e) {
     console.warn("[sales-feed] Écriture Firestore refusée:", e?.code || e);
+    /* FIX F10 : avant, `return` sec → la vente détectée n'apparaissait
+       NULLE PART (ni Firestore, ni écran). On l'affiche au moins en local ;
+       si un autre visiteur la publie ensuite, le snapshot dédoublonne. */
+    addSaleLocal(rec);
     return;
   }
 
@@ -557,6 +592,8 @@ function subscribeSharedFeed() {
       }
 
       if (change.type === "added" && !cardByDocId.has(id)) {
+        /* FIX F10 : retirer l'éventuelle carte de repli local du même doc */
+        feedEl?.querySelector(`[data-docid="${CSS.escape(id)}"]`)?.remove();
         const card = buildCard(rec, true);
         insertCardSorted(card, rec.timestamp);
         requestAnimationFrame(() => card.classList.add("salecard--in"));
@@ -627,8 +664,14 @@ async function analyzeTx(txOrHash) {
   let tx = typeof txOrHash === "object" ? txOrHash : null;
   const hash = tx ? tx.txHash : txOrHash;
 
+  /* FIX F8 : le Python re-fetch TOUJOURS /transactions/{hash} avant
+     d'analyser. Ici on faisait confiance aux `operations` embarquées dans
+     la réponse LISTE — or l'API renvoie parfois `operations: []` (retard
+     d'indexation, champ tronqué) alors que le détail, lui, les contient.
+     Résultat : "0 NFT op" → return → tx déjà dans `seen` → perdue.
+     → un tableau VIDE déclenche désormais aussi le fetch du détail. */
   const needsDetail =
-    !tx || (!Array.isArray(tx.operations) &&
+    !tx || ((!Array.isArray(tx.operations) || tx.operations.length === 0) &&
             (tx.function || "").toLowerCase() !== "bid");
   if (needsDetail) {
     tx = await throttledFetchJson(
@@ -677,11 +720,25 @@ async function analyzeTx(txOrHash) {
     return;
   }
 
+  /* Parité Python : parse_transaction ne filtre que sur type=="nft".
+     L'exigence `op.receiver` écartait des opérations légitimes (la route
+     From/To gère déjà les champs manquants) ; seul "burn" reste exclu. */
   const nftOps = (tx.operations || []).filter(
-    op => op.type === "nft" && op.identifier &&
-          op.action !== "burn" && op.receiver
+    op => op.type === "nft" && op.identifier && op.action !== "burn"
   );
-  if (!nftOps.length) return;
+  if (!nftOps.length) {
+    /* FIX F8b : tx SUCCESS d'une fonction de vente mais AUCUNE opération
+       NFT même dans le détail → très probablement un retard d'indexation.
+       On la fait repasser par le circuit pending (retraitée à chaque
+       cycle) pendant PENDING_MAX_AGE_MS au lieu de l'abandonner. */
+    const first = state.retried.get(tx.txHash) ?? Date.now();
+    state.retried.set(tx.txHash, first);
+    if (Date.now() - first < PENDING_MAX_AGE_MS) {
+      state.pending.set(tx.txHash, Date.now());
+    }
+    return;
+  }
+  state.retried.delete(tx.txHash);
 
   const byId = new Map();
   for (const op of nftOps) if (!byId.has(op.identifier)) byId.set(op.identifier, op);
@@ -851,6 +908,7 @@ async function scanCycle() {
 
   const cutoff = Date.now() - SEEN_TTL_MS;
   for (const [h, t] of state.seen) if (t < cutoff) state.seen.delete(h);
+  for (const [h, t] of state.retried) if (t < cutoff) state.retried.delete(h); // FIX F8
 
   refreshTimes();
   setStatus("live");
@@ -985,6 +1043,7 @@ function buildCard(rec, animate) {
   card.className = "salecard" + (animate ? "" : " salecard--in");
   card.dataset.method = rec.method;
   card.dataset.tx = rec.txHash;
+  card.dataset.docid = docIdFor(rec);   // FIX F10 : dédup local ↔ snapshot
 
   const priceHtml = rec.payment
     ? `<div class="salecard-price">${formatAmount(rec.payment.value)}
@@ -1132,7 +1191,15 @@ async function initSalesFeed() {
   setInterval(refreshTimes, 30000);
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") saveStateNow();
+    if (document.visibilityState === "hidden") {
+      saveStateNow();
+    } else if (state.running) {
+      /* FIX F11 : les timers des onglets cachés sont bridés (≥1 min) par
+         le navigateur → le scan s'endort. Au retour, on relance un cycle
+         immédiatement pour rattraper le retard. */
+      clearTimeout(state.timer);
+      scanCycle();
+    }
   });
   window.addEventListener("pagehide", saveStateNow);
 
