@@ -487,6 +487,20 @@
   border-color: var(--gold-main, #ffcc33);
 }
 
+/* Logos marketplace (images/xoxno.png, images/oox.png) */
+.salecard-links a.sf-mkt-link { padding: 0; overflow: hidden; }
+.salecard-links a.sf-mkt-link img {
+  width: 16px; height: 16px;
+  object-fit: contain;
+  display: block;
+  filter: grayscale(0.4) opacity(0.75);
+  transition: filter .2s, transform .2s;
+}
+.salecard-links a.sf-mkt-link:hover img {
+  filter: none;
+  transform: scale(1.12);
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .sf-title .sf-title-line { white-space: normal; gap: 8px; flex-wrap: wrap; }

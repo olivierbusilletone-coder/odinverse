@@ -19,30 +19,6 @@
    route NFT réelle (FIX F1/F7), paiements filtrés (FIX F2), herotags
    TTL 1 h (FIX F3), anti-doublons TTL (FIX Q3), récap bulk (FIX Q2),
    throttle + backoff (FIX R1), withOperations=true, médias (FIX B10).
-
-   ★★★ FIX 5.6 — TRANSACTIONS MANQUANTES (parité avec ScanNFTs_5_4.py) :
-   F8.  La liste /transactions?withOperations=true renvoie parfois une tx
-        SUCCESS avec `operations` vide/absent (retard d'indexation ou champ
-        tronqué). L'ancien code concluait "0 NFT" et la tx — déjà dans
-        `seen` — était PERDUE À JAMAIS. Le Python, lui, re-fetch TOUJOURS le
-        détail /transactions/{hash}. → Désormais : détail re-fetché si
-        operations est vide, et si le détail est encore sans opération NFT,
-        la tx repasse par le circuit `pending` (retry jusqu'à 15 min) au
-        lieu d'être abandonnée. C'était la cause n°1 des tx manquantes.
-   F9.  throttledFetchJson ne ré-essayait JAMAIS (le Python fait
-        max_retries=3) : un seul 429/5xx et la page de scan était sautée,
-        un seul échec sur le détail et la tx filait en pending (droppée
-        après 15 min si la congestion durait). → jusqu'à 3 tentatives par
-        requête, en conservant le backoff global.
-   F10. Mode partagé : si l'écriture Firestore était refusée (règles,
-        quota, offline), publishSale faisait `return` → la vente détectée
-        n'était affichée NULLE PART. → repli addSaleLocal (avec dédup si le
-        document arrive ensuite via snapshot).
-   F11. Couverture : 3 fonctions scannées / 9 s = chaque fonction vue
-        toutes les ~40-80 s (le Python scanne les 10 toutes les 5 s).
-        → 5 fonctions / 7 s (sweep complet en 2 cycles) + rattrapage
-        immédiat au retour d'onglet (visibilitychange), car les timers
-        des onglets cachés sont bridés par le navigateur.
    ========================================================================= */
 
 (() => {
@@ -64,6 +40,24 @@ const FORBIDDEN_KEYWORDS = [
   "unlisting", "cancelstake", "withdrawstake", "withdraw",
 ];
 
+/* FIX B1/R3 (parité Python) : filtre sur les collections suivies,
+   DÉSACTIVÉ par défaut (tout le réseau est capté). Passer à true pour
+   restreindre le flux aux collections ci-dessous. */
+const FILTER_COLLECTIONS = false;
+const COLLECTIONS_SET = new Set([
+  "BLOOPX-1ced34", "MADC-d03f58", "WJX-31a722", "HODL-ffb01b",
+  "CREATOROCX-b96f26", "MAINSEASON-3db9f8", "OCXSII-26bb89",
+  "GHOWLETS-7d3ebf", "OWLETS-5446cd", "SOCIUSOP-a1713e", "BOOGAS-afc98d",
+  "EAPES-8f3c1f", "SRB-61daf7", "HYPEY-794a10", "ZOMBIX-7dd9a4",
+  "VRSENYATH-4f2c95", "VRSENYATH2-6b632c", "UAC-406dab", "FRUGLY-e6158a",
+  "R2L-6aa15e", "BAXC-cdf74d", "OAG-0eaf3b", "EVCYB-aea8b4",
+  "EVOAG-1a4f7d", "ANDRIANS-e6144d", "MOS-b9b4b2", "PROJECTF-7f9ae1",
+  "XPIXEL-c59b48", "VICBITS-da9df7", "KO7GF-044047", "SUBJECTX-2c184d",
+  "BEEF-032185", "MINIBOSSES-104b7f", "SUPERVIC-f07785", "HAMHAM-800c2e",
+  "HALLOVIC-b80f05", "SVUACT0-e86669", "ODINSDECK-4e300a",
+  "VRSKRAAD-d3e816", "MINIKRAAD-bff059", "OFT-01552b", "SMARUGON-69bfc0",
+]);
+
 const COLLECTION_MESSAGES = {
   BLOOPX: "🔥 NFT created by @BloopXNft",
   CREATOROCX: "🎨 NFT created by @Cuget",
@@ -72,7 +66,8 @@ const COLLECTION_MESSAGES = {
   GHOWLETS: "🎨 NFT created by @Cuget",
   OWLETS: "🎨 NFT created by @Cuget",
   VRSENYATH: "🎨 NFT created by Alejandro",
-  VRSENYATH2: "🎨 EnyathAI NFTs created by Spawny (ArtCpa)",
+  VRSENYATH2: "🎨 EnyathAI NFTs created by Spawny (ArtCpa) · "
+    + "This is a 🎁 by VersusProjects for those minting an Enyath NFT",
   ODINSDECK: "⚔️ NFT created by @TriskelMultiversX",
   OFT: "⚔️ NFT created by @TriskelMultiversX",
   XPIXEL: "🎨 NFT created by @Cuget",
@@ -83,10 +78,13 @@ const KNOWN_ADDRESSES = {
   "erd1qqqqqqqqqqqqqpgq6wegs2xkypfpync8mn2sa5cmpqjlvrhwz5nqgepyg8": "XOXNO Marketplace",
   "erd1qqqqqqqqqqqqqpgqwp73w2a9eyzs64eltupuz3y3hv798vlv899qrjnflg": "OOX Marketplace",
   "erd1qqqqqqqqqqqqqpgqequr9yk0g6h9mnsylcqcuntsw3at374jlrlqx8nhpj": "Boogas Caveman Mint",
+  /* Parité Python (XOXNO_LAUNCHPAD_ERD) : les mints via launchpad sont
+     rattachés à XOXNO par detectMarketplace et resolveHerotag. */
+  "erd1qqqqqqqqqqqqqpgqlysfrztmsr0tqunm7slerygxkffqgxg6ys5s2hescn": "XOXNO Launchpad",
 };
 
 const SC_ADDRESS_PREFIX = "erd1qqqqqqqqqqqqq";     // FIX F1/F2
-const LOOP_DELAY_MS       = 7000;                  // FIX F11 (était 9000)
+const LOOP_DELAY_MS       = 9000;
 const MIN_REQUEST_INTERVAL = 650;                  // FIX R1 (~1.5 req/s)
 const SEEN_TTL_MS         = 3600 * 1000;           // FIX Q3
 const HEROTAG_TTL_MS      = 3600 * 1000;           // FIX F3
@@ -96,8 +94,7 @@ const MAX_FEED_CARDS      = 50;
 const PAGE_SIZE           = 50;
 const MAX_PAGES_PER_SCAN  = 4;
 const PENDING_MAX_AGE_MS  = 15 * 60 * 1000;
-const FUNCTIONS_PER_CYCLE = 5;                     // FIX F11 (était 3)
-const HTTP_RETRIES        = 2;                     // FIX F9 (≈ Python max_retries=3)
+const FUNCTIONS_PER_CYCLE = 3;
 const BACKOFF_BASE_MS = 5000;
 const BACKOFF_MAX_MS  = 60000;
 
@@ -126,7 +123,6 @@ const state = {
   scanIdx: 0,
   seen: new Map(),              // txHash -> détecté à (ms)   (FIX Q3)
   pending: new Map(),           // txHash -> ajouté à (ms)
-  retried: new Map(),           // txHash -> 1er "0 NFT op" à (ms) (FIX F8)
   herotags: new Map(),          // addr -> {name, ts}         (FIX F3)
   events: [],                   // mode LOCAL uniquement
   timer: null,
@@ -226,37 +222,32 @@ let httpChain = Promise.resolve();
 let failStreak = 0;
 let backoffUntil = 0;
 
-function throttledFetchJson(url, retries = HTTP_RETRIES) {
+function throttledFetchJson(url) {
   const run = async () => {
-    /* FIX F9 : comme _sync_get() côté Python (max_retries=3), on ré-essaie
-       sur 429/5xx/erreur réseau au lieu d'abandonner au 1er échec — un seul
-       429 faisait sauter une page de scan ou expédiait la tx en pending. */
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      const backoffWait = backoffUntil - Date.now();
-      if (backoffWait > 0) await new Promise(r => setTimeout(r, backoffWait));
-      const wait = MIN_REQUEST_INTERVAL - (performance.now() - lastRequestAt);
-      if (wait > 0) await new Promise(r => setTimeout(r, wait));
-      lastRequestAt = performance.now();
+    const backoffWait = backoffUntil - Date.now();
+    if (backoffWait > 0) await new Promise(r => setTimeout(r, backoffWait));
+    const wait = MIN_REQUEST_INTERVAL - (performance.now() - lastRequestAt);
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    lastRequestAt = performance.now();
 
-      try {
-        const res = await fetch(url);
-        if (res.status === 429 || res.status >= 500) {
-          failStreak += 1;
-          backoffUntil = Date.now() +
-            Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
-          continue;                     // ré-essai après le backoff
-        }
-        if (!res.ok) return null;       // 4xx ≠ 429 : définitif, inutile d'insister
-        const json = await res.json();
-        failStreak = 0;
-        return json;
-      } catch {
+    try {
+      const res = await fetch(url);
+      if (res.status === 429 || res.status >= 500) {
         failStreak += 1;
         backoffUntil = Date.now() +
           Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
+        return null;
       }
+      if (!res.ok) return null;
+      const json = await res.json();
+      failStreak = 0;
+      return json;
+    } catch {
+      failStreak += 1;
+      backoffUntil = Date.now() +
+        Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** (failStreak - 1));
+      return null;
     }
-    return null;
   };
   const p = httpChain.then(run, run);
   httpChain = p.catch(() => {});
@@ -358,6 +349,53 @@ function deriveNftRoute(tx, identifier, methodClean) {
 }
 
 /* FIX F2 */
+/* Marketplace de la transaction, détection à 3 niveaux :
+   1) adresses connues (SC invoqué prioritaire, puis opérations) ;
+   2) noms d'assets fournis par l'API (senderAssets/receiverAssets contenant
+      "OOX"/"XOXNO") — couvre les SC des marketplaces NON listés dans
+      KNOWN_ADDRESSES (OOX utilise plusieurs contrats), même critère que le
+      filtre F2 du Python ;
+   3) pubkey hex des SC dans le data décodé — couvre les appels
+      ESDTNFTTransfer/MultiESDTNFTTransfer où tx.receiver = l'expéditeur
+      lui-même et où le SC n'apparaît QUE dans le payload. */
+const MARKET_SC_HEX = [
+  ["00000000000000000500d3b28828d62052124f07dcd50ed31b0825f60eee1526", "xoxno"], // Marketplace
+  ["00000000000000000500f92091897b80deb0727bf43f919106b25204191a2429", "xoxno"], // Launchpad
+  ["00000000000000000500707d172ba5c9050d573f5f03c14491bb3c53b3ec394a", "oox"],   // Marketplace
+];
+
+function marketFromLabel(s) {
+  if (!s) return null;
+  const n = String(s).toLowerCase();
+  if (n.includes("xoxno")) return "xoxno";
+  if (n.includes("oox"))   return "oox";
+  return null;
+}
+
+function detectMarketplace(tx) {
+  /* 1) adresses connues */
+  const addrs = [tx.receiver, tx.sender];
+  for (const op of tx.operations || []) addrs.push(op.sender, op.receiver);
+  for (const a of addrs) {
+    const m = marketFromLabel(a && KNOWN_ADDRESSES[a]);
+    if (m) return m;
+  }
+  /* 2) noms d'assets de l'API */
+  for (const op of tx.operations || []) {
+    const m = marketFromLabel(op.senderAssets?.name) ||
+              marketFromLabel(op.receiverAssets?.name);
+    if (m) return m;
+  }
+  /* 3) pubkey hex dans le data */
+  const dataStr = (decodeBase64(tx.data || "") || "").toLowerCase();
+  if (dataStr) {
+    for (const [hex, m] of MARKET_SC_HEX) {
+      if (dataStr.includes(hex)) return m;
+    }
+  }
+  return null;
+}
+
 function extractPayments(tx) {
   const payments = [];
   for (const op of tx.operations || []) {
@@ -486,6 +524,15 @@ async function fetchNftMedia(identifier) {
   };
 }
 
+/* Lien OOX : toujours la page de la COLLECTION (ex. MOS-b9b4b2),
+   jamais l'identifier complet avec le nonce (MOS-b9b4b2-01a3). */
+function ooxCollectionUrl(rec) {
+  const coll = (rec && rec.collection)
+    || ((rec && rec.identifier) || "").split("-").slice(0, 2).join("-");
+  return coll ? `https://oox.art/marketplace/collections/${coll}`
+              : "https://oox.art/marketplace/";
+}
+
 function collectionMessage(collection) {
   if (!collection) return "";
   return COLLECTION_MESSAGES[collection.split("-")[0]] || "";
@@ -538,10 +585,6 @@ async function publishSale(rec) {
     await fb.setDoc(ref, cleanRecord(rec), { merge: true });
   } catch (e) {
     console.warn("[sales-feed] Écriture Firestore refusée:", e?.code || e);
-    /* FIX F10 : avant, `return` sec → la vente détectée n'apparaissait
-       NULLE PART (ni Firestore, ni écran). On l'affiche au moins en local ;
-       si un autre visiteur la publie ensuite, le snapshot dédoublonne. */
-    addSaleLocal(rec);
     return;
   }
 
@@ -560,7 +603,9 @@ async function publishSale(rec) {
     if (info) {
       patch.mediaUrl = info.url;
       if (info.fileType) patch.mediaType = info.fileType;
-      if (info.name && !rec.bulkCount &&
+      /* La clause name===identifier exclut d'elle-même les cartes groupées
+     ("COLL × N NFTs") ; les cartes SFT ×N restent enrichissables. */
+      if (info.name &&
           (!rec.name || rec.name === rec.identifier)) {
         patch.name = info.name;
       }
@@ -592,8 +637,6 @@ function subscribeSharedFeed() {
       }
 
       if (change.type === "added" && !cardByDocId.has(id)) {
-        /* FIX F10 : retirer l'éventuelle carte de repli local du même doc */
-        feedEl?.querySelector(`[data-docid="${CSS.escape(id)}"]`)?.remove();
         const card = buildCard(rec, true);
         insertCardSorted(card, rec.timestamp);
         requestAnimationFrame(() => card.classList.add("salecard--in"));
@@ -644,6 +687,22 @@ function updateCard(entry, rec) {
   if (rec.mediaUrl && rec.mediaUrl !== prev.mediaUrl) {
     setCardMedia(card, rec);
   }
+  /* Le champ market peut arriver après coup (doc écrit par un ancien
+     client puis complété par le détecteur) → corriger le logo. */
+  if (rec.market && rec.market !== prev.market) {
+    const link = card.querySelector(".sf-mkt-link");
+    if (link) {
+      const isOox = rec.market === "oox";
+      link.href = isOox ? ooxCollectionUrl(rec)
+                        : `https://xoxno.com/nft/${rec.identifier}`;
+      link.title = isOox ? "OOX" : "XOXNO";
+      const img = link.querySelector("img");
+      if (img) {
+        img.src = isOox ? "images/oox.png" : "images/xoxno.png";
+        img.alt = link.title;
+      }
+    }
+  }
 }
 
 /* Compteurs globaux calculés sur la fenêtre partagée (50 derniers) */
@@ -664,14 +723,8 @@ async function analyzeTx(txOrHash) {
   let tx = typeof txOrHash === "object" ? txOrHash : null;
   const hash = tx ? tx.txHash : txOrHash;
 
-  /* FIX F8 : le Python re-fetch TOUJOURS /transactions/{hash} avant
-     d'analyser. Ici on faisait confiance aux `operations` embarquées dans
-     la réponse LISTE — or l'API renvoie parfois `operations: []` (retard
-     d'indexation, champ tronqué) alors que le détail, lui, les contient.
-     Résultat : "0 NFT op" → return → tx déjà dans `seen` → perdue.
-     → un tableau VIDE déclenche désormais aussi le fetch du détail. */
   const needsDetail =
-    !tx || ((!Array.isArray(tx.operations) || tx.operations.length === 0) &&
+    !tx || (!Array.isArray(tx.operations) &&
             (tx.function || "").toLowerCase() !== "bid");
   if (needsDetail) {
     tx = await throttledFetchJson(
@@ -700,6 +753,7 @@ async function analyzeTx(txOrHash) {
 
   const payments = extractPayments(tx);
   const mainPayment = getMainPayment(payments, fn);
+  const market = detectMarketplace(tx);
 
   if (fn === "bid") {
     const bidNft = extractNftFromBidData(tx);
@@ -707,6 +761,7 @@ async function analyzeTx(txOrHash) {
     emitSale({
       txHash: tx.txHash, timestamp: tx.timestamp,
       method: fn, identifier: bidNft.identifier, collection: bidNft.collection,
+      market,
       name: bidNft.identifier, bulkCount: 0,
       /* Fallback FIX F1 (Python) : le NFT n'a pas encore bougé sur un bid →
          From = tx.receiver (listing / marketplace), To = tx.sender
@@ -720,29 +775,25 @@ async function analyzeTx(txOrHash) {
     return;
   }
 
-  /* Parité Python : parse_transaction ne filtre que sur type=="nft".
-     L'exigence `op.receiver` écartait des opérations légitimes (la route
-     From/To gère déjà les champs manquants) ; seul "burn" reste exclu. */
   const nftOps = (tx.operations || []).filter(
-    op => op.type === "nft" && op.identifier && op.action !== "burn"
+    op => op.type === "nft" && op.identifier &&
+          op.action !== "burn" && op.receiver
   );
-  if (!nftOps.length) {
-    /* FIX F8b : tx SUCCESS d'une fonction de vente mais AUCUNE opération
-       NFT même dans le détail → très probablement un retard d'indexation.
-       On la fait repasser par le circuit pending (retraitée à chaque
-       cycle) pendant PENDING_MAX_AGE_MS au lieu de l'abandonner. */
-    const first = state.retried.get(tx.txHash) ?? Date.now();
-    state.retried.set(tx.txHash, first);
-    if (Date.now() - first < PENDING_MAX_AGE_MS) {
-      state.pending.set(tx.txHash, Date.now());
-    }
-    return;
-  }
-  state.retried.delete(tx.txHash);
+  if (!nftOps.length) return;
 
   const byId = new Map();
   for (const op of nftOps) if (!byId.has(op.identifier)) byId.set(op.identifier, op);
-  const identifiers = [...byId.keys()];
+  let identifiers = [...byId.keys()];
+
+  /* FIX B1 : filtre optionnel sur les collections suivies */
+  if (FILTER_COLLECTIONS) {
+    identifiers = identifiers.filter(id => {
+      const coll = byId.get(id).collection ||
+                   id.split("-").slice(0, 2).join("-");
+      return COLLECTIONS_SET.has(coll);
+    });
+    if (!identifiers.length) return;
+  }
 
   /* Regroupement : dès que la tx déplace PLUSIEURS NFTs, une seule carte
      par collection avec badge ×N et prix total — au lieu d'une carte par
@@ -777,13 +828,19 @@ async function analyzeTx(txOrHash) {
       else toErd = fbTo;
 
       const single = ids.length === 1;
+      /* Parité Python (send_bulk_recap) : quantité TOTALE, exemplaires SFT
+         compris — badge et libellé utilisent totalQty (≥ nb d'identifiers). */
+      const totalQty = ids.reduce(
+        (s, i) => s + (parseInt(byId.get(i).value, 10) || 1), 0);
+      const singleQty = single ? (parseInt(byId.get(ids[0]).value, 10) || 1) : 0;
       emitSale({
         txHash: tx.txHash, timestamp: tx.timestamp,
         method: fn, identifier: ids[0], collection: coll,
+        market,
         /* Collection isolée dans une tx multi-collections → carte normale */
         name: single ? (byId.get(ids[0]).name || ids[0])
-                     : `${coll.split("-")[0]} × ${ids.length} NFTs`,
-        bulkCount: single ? 0 : ids.length,
+                     : `${coll.split("-")[0]} × ${totalQty} NFTs`,
+        bulkCount: single ? (singleQty > 1 ? singleQty : 0) : totalQty,
         fromErd, toErd, fromName, toName,
         /* Prix total sur le 1er récap uniquement (Python: first_recap) —
            sinon le volume EGLD est compté N fois par les compteurs. */
@@ -797,6 +854,9 @@ async function analyzeTx(txOrHash) {
   identifiers.forEach((id, idx) => {
     const op = byId.get(id);
     const coll = op.collection || id.split("-").slice(0, 2).join("-");
+    /* Parité Python (format_nft_entry) : op.value = nombre d'exemplaires
+       pour les SFT/Meta-ESDT → badge ×N sur la vignette si > 1. */
+    const qty = parseInt(op.value, 10) || 1;
     let [fromErd, toErd] = deriveNftRoute(tx, id, fn);
     /* Fallback FIX F1 (Python) : aucune opération NFT exploitable →
        giveaway = (sender, receiver), sinon (receiver, sender). */
@@ -807,7 +867,8 @@ async function analyzeTx(txOrHash) {
     emitSale({
       txHash: tx.txHash, timestamp: tx.timestamp,
       method: fn, identifier: id, collection: coll,
-      name: op.name || id, bulkCount: 0,
+      market,
+      name: op.name || id, bulkCount: qty > 1 ? qty : 0,
       fromErd, toErd, fromName: null, toName: null,
       /* Python : prix affiché sur le 1er NFT de la tx uniquement — évite
          le double comptage du volume EGLD et l'affichage répété. */
@@ -908,7 +969,6 @@ async function scanCycle() {
 
   const cutoff = Date.now() - SEEN_TTL_MS;
   for (const [h, t] of state.seen) if (t < cutoff) state.seen.delete(h);
-  for (const [h, t] of state.retried) if (t < cutoff) state.retried.delete(h); // FIX F8
 
   refreshTimes();
   setStatus("live");
@@ -1016,7 +1076,9 @@ async function upgradeMediaLocal(rec, card) {
   rec.mediaUrl = info.url;
   rec.mediaType = info.fileType || "";
 
-  if (info.name && !rec.bulkCount &&
+  /* La clause name===identifier exclut d'elle-même les cartes groupées
+     ("COLL × N NFTs") ; les cartes SFT ×N restent enrichissables. */
+  if (info.name &&
       (!rec.name || rec.name === rec.identifier)) {
     rec.name = info.name;
     const nameEl = card.querySelector(".salecard-name");
@@ -1043,7 +1105,6 @@ function buildCard(rec, animate) {
   card.className = "salecard" + (animate ? "" : " salecard--in");
   card.dataset.method = rec.method;
   card.dataset.tx = rec.txHash;
-  card.dataset.docid = docIdFor(rec);   // FIX F10 : dédup local ↔ snapshot
 
   const priceHtml = rec.payment
     ? `<div class="salecard-price">${formatAmount(rec.payment.value)}
@@ -1065,15 +1126,22 @@ function buildCard(rec, animate) {
         <span class="salecard-arrow">⚔</span>
         <span class="salecard-actor salecard-to">${escapeHtml(toDisplay)}</span>
       </div>
-      ${custom ? `<div class="salecard-custom">${custom}</div>` : ""}
+      ${custom ? `<div class="salecard-custom" title="${escapeHtml(custom)}">${escapeHtml(custom)}</div>` : ""}
     </div>
     <div class="salecard-side">
       ${priceHtml}
       <div class="salecard-links">
         <a href="https://explorer.multiversx.com/transactions/${rec.txHash}"
            target="_blank" rel="noopener noreferrer" title="Explorer">⛓</a>
-        <a href="https://xoxno.com/nft/${rec.identifier}"
-           target="_blank" rel="noopener noreferrer" title="XOXNO">✕</a>
+        ${rec.market === "oox"
+          ? `<a href="${ooxCollectionUrl(rec)}"
+               target="_blank" rel="noopener noreferrer" title="OOX" class="sf-mkt-link"><img
+                 src="images/oox.png" alt="OOX" loading="lazy"
+                 onerror="this.replaceWith('O')"></a>`
+          : `<a href="https://xoxno.com/nft/${rec.identifier}"
+               target="_blank" rel="noopener noreferrer" title="XOXNO" class="sf-mkt-link"><img
+                 src="images/xoxno.png" alt="XOXNO" loading="lazy"
+                 onerror="this.replaceWith('X')"></a>`}
       </div>
     </div>`;
 
@@ -1191,15 +1259,7 @@ async function initSalesFeed() {
   setInterval(refreshTimes, 30000);
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
-      saveStateNow();
-    } else if (state.running) {
-      /* FIX F11 : les timers des onglets cachés sont bridés (≥1 min) par
-         le navigateur → le scan s'endort. Au retour, on relance un cycle
-         immédiatement pour rattraper le retard. */
-      clearTimeout(state.timer);
-      scanCycle();
-    }
+    if (document.visibilityState === "hidden") saveStateNow();
   });
   window.addEventListener("pagehide", saveStateNow);
 
