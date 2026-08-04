@@ -2470,7 +2470,7 @@ footer a:visited {
   max-width: 200px;
   justify-self: center;
   height: auto;
-  min-height: 240px;      /* image 200px + nom (2 lignes) + badge */
+  min-height: 282px;      /* image 200px + nom (2 lignes) + badge */
   padding: 8px 8px 10px;
 
   background:
@@ -6077,8 +6077,22 @@ html {
 /* Mobile responsive for HUD */
 @media(max-width:640px){
   .top-hud{flex-direction:column;gap:10px;padding:10px 0 16px;}
-  .header-nav{width:100%;height:54px;padding:0 6px;border-radius:14px;}
-  .nav-link{padding:6px 4px;border-radius:8px;}
+  .header-nav{
+    width:100%;height:54px;padding:0 8px;border-radius:14px;
+    /* le contenu reste centré tant qu'il tient, et ne se fait plus
+       rogner des deux côtés quand il déborde : il défile */
+    justify-content:safe center;
+    flex-wrap:nowrap;
+    gap:4px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    scroll-behavior:smooth;
+  }
+  .header-nav::-webkit-scrollbar{display:none;}
+  .nav-link{padding:6px 4px;border-radius:8px;flex:0 0 auto;white-space:nowrap;}
+  .nav-sep{flex:0 0 auto;}
   .nav-rune{font-size:.85rem;}
   .nav-text{font-size:.62rem;letter-spacing:.12em;}
   .nav-sep{font-size:.7rem;}
@@ -6089,8 +6103,8 @@ html {
 }
 @keyframes walletSlideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
 @media(max-width:480px){
-  .header-nav{gap:14px;padding:0 12px;}
-  .header-nav a{font-size:.62rem;}
+  .header-nav{gap:4px;padding:0 8px;}
+  .header-nav a{font-size:.60rem;white-space:nowrap;}
   .section-num{font-size:.56rem;padding:4px 7px;}
   .utility-grid{grid-template-columns:1fr;}
   .other-coll-header,.odin-coll-header{padding:14px 14px;}
@@ -8022,13 +8036,20 @@ html {
 
   /* Nav : liens plus petits */
   .header-nav {
-    gap: 10px;
-    padding: 0 8px;
+    gap: 3px;
+    padding: 0 6px;
     height: 38px;
+    justify-content: safe center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
   }
+  .header-nav::-webkit-scrollbar { display: none; }
   .header-nav a {
-    font-size: .60rem;
-    letter-spacing: .04em;
+    font-size: .56rem;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   /* NFT list : 2 colonnes fixes pour éviter cartes trop étroites */
@@ -8273,4 +8294,29 @@ html {
 ══════════════════════════════════════════════════ */
 h2.section-title {
   margin: 0;
+}
+
+
+/* ── Cooldown NFT : grille + slots (badge en haut, NFT joués seulement) ── */
+.expl-card.expl-cooldown img,
+.expl-card.expl-cooldown video,
+.combat-hand-slot.slot-cooldown img,
+.combat-hand-slot.slot-cooldown video { filter: grayscale(.65) brightness(.6); }
+.expl-card.expl-cooldown { border-color: rgba(255,60,60,.45); }
+.combat-hand-slot.slot-cooldown { border-color: rgba(255,60,60,.55); }
+.expl-cd-badge,
+.slot-cd-badge {
+  position: absolute; left: 50%; transform: translateX(-50%); top: 8px;
+  padding: 2px 8px; border-radius: 999px;
+  background: rgba(20,0,0,.82); border: 1px solid rgba(255,60,60,.45);
+  color: #ff4d4d; font-family: 'Cinzel', serif; font-weight: 800;
+  letter-spacing: .03em; white-space: nowrap; backdrop-filter: blur(5px);
+  pointer-events: none; z-index: 5; font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.expl-cd-badge { font-size: .6rem; }
+.slot-cd-badge { top: 5px; font-size: .5rem; padding: 1px 5px; }
+@media (max-width: 640px) {
+  .expl-cd-badge { font-size: .54rem; top: 6px; }
+  .slot-cd-badge { font-size: .45rem; }
 }
