@@ -302,28 +302,140 @@ function hexToUtf8(hex) {
   } catch { return null; }
 }
 
-/* FIX F7 */
-function sellerFromPayouts(tx, buyerErd) {
-  let best = null;
-  for (const op of tx.operations || []) {
-    const t = op.type;
-    if (t !== "egld" && t !== "esdt") continue;
-    if (t === "esdt" && op.esdtType && op.esdtType !== "FungibleESDT") continue;
-    const snd = op.sender, rcv = op.receiver;
-    if (!(isSmartContract(snd) && rcv && !isSmartContract(rcv))) continue;
-    if (rcv === buyerErd || rcv === tx.sender) continue;
-    const val = Number(op.value || 0);
-    if (val > 0 && (!best || val > best.val)) best = { val, rcv };
-  }
-  return best ? best.rcv : null;
+/* === ROUTE NFT — portage 6.7 (FIX R1 + A6) ============================= */
+
+/* FIX A6 — appariement NFT <-> vendeur par les EVENEMENTS du contrat.
+   En modèle de séquestre (buy sur annonce), le NFT part du contrat : le
+   vendeur n'apparaît que comme destinataire d'un paiement. Avec UN vendeur,
+   « le mieux payé » suffit ; avec PLUSIEURS (bulkBuy), c'est faux — mesuré
+   par le Python sur un cas à 3 vendeurs : le mieux payé était attribué aux
+   trois NFTs. Les buy_event / accept_offer_token_event des logs portent
+   l'appariement exact : on repère le topic en forme de ticker (le suivant
+   porte le nonce → identifiant), puis les topics de 32 octets (des
+   adresses) ; l'acheteur étant connu par l'opération NFT, l'autre est le
+   vendeur. Les clés publiques sont retraduites en bech32 via les adresses
+   déjà présentes dans la transaction (aucun encodeur bech32 nécessaire). */
+const COLLECTION_RX = /^[A-Z0-9]{2,12}-[0-9a-f]{6}$/;
+const BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+function bech32ToHex(address) {
+  try {
+    const i = String(address).indexOf("1");
+    if (i < 0) return null;
+    const data = String(address).slice(i + 1);
+    const values = [];
+    for (const c of data) {
+      const v = BECH32_CHARSET.indexOf(c);
+      if (v < 0) return null;
+      values.push(v);
+    }
+    values.length -= 6;                      /* somme de contrôle */
+    let acc = 0, bits = 0;
+    const out = [];
+    for (const v of values) {
+      acc = (acc << 5) | v;
+      bits += 5;
+      while (bits >= 8) {
+        bits -= 8;
+        out.push((acc >> bits) & 0xff);
+      }
+    }
+    if (out.length !== 32) return null;
+    return out.map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch { return null; }
 }
 
-/* FIX F1 */
-const F7_METHODS = new Set([
-  "buy", "bulkbuy", "buyswap", "bulkswap", "acceptoffer", "acceptglobaloffer",
-]);
+function b64ToBytes(b64) {
+  try {
+    const s = atob(b64 || "");
+    const u = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+    return u;
+  } catch { return new Uint8Array(0); }
+}
 
-function deriveNftRoute(tx, identifier, methodClean) {
+const bytesToHex = u =>
+  [...u].map(b => b.toString(16).padStart(2, "0")).join("");
+
+function* iterEventTopics(tx) {
+  const blocks = [tx.logs];
+  for (const scr of tx.results || []) {
+    if (scr && typeof scr === "object") blocks.push(scr.logs);
+  }
+  for (const blk of blocks) {
+    if (!blk || typeof blk !== "object") continue;
+    for (const ev of blk.events || []) {
+      if (ev && Array.isArray(ev.topics) && ev.topics.length) yield ev.topics;
+    }
+  }
+}
+
+function* iterTxAddresses(tx) {
+  const seen = new Set();
+  const items = [tx, ...(tx.operations || []), ...(tx.results || [])];
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    for (const role of ["sender", "receiver", "address"]) {
+      const a = item[role];
+      if (a && !seen.has(a)) { seen.add(a); yield a; }
+    }
+  }
+  const blks = [tx.logs, ...(tx.results || []).map(s => s && s.logs)];
+  for (const blk of blks) {
+    if (!blk || typeof blk !== "object") continue;
+    const cands = [blk.address,
+                   ...(blk.events || []).map(e => e && e.address)];
+    for (const a of cands) {
+      if (a && !seen.has(a)) { seen.add(a); yield a; }
+    }
+  }
+}
+
+function buildEventIndex(tx) {
+  const known = {};
+  for (const addr of iterTxAddresses(tx)) {
+    const h = bech32ToHex(addr);
+    if (h) known[h] = addr;
+  }
+  const index = {};
+  for (const topics of iterEventTopics(tx)) {
+    const raw = topics.map(b64ToBytes);
+
+    let identifier = null;
+    for (let i = 0; i < raw.length - 1; i++) {
+      const b = raw[i];
+      if (!b.length || b.some(x => x < 0x20 || x > 0x7e)) continue;
+      const text = String.fromCharCode(...b);
+      if (COLLECTION_RX.test(text)) {
+        let nonceHex = bytesToHex(raw[i + 1]);
+        if (nonceHex.length % 2) nonceHex = "0" + nonceHex;
+        identifier = nonceHex ? `${text}-${nonceHex}` : text;
+        break;
+      }
+    }
+    if (!identifier) continue;
+
+    for (const b of raw) {
+      if (b.length !== 32 || !b.some(x => x !== 0)) continue;
+      const bech = known[bytesToHex(b)];
+      if (!bech) continue;
+      const list = index[identifier] || (index[identifier] = []);
+      if (!list.includes(bech)) list.push(bech);
+    }
+  }
+  return index;
+}
+
+/* FIX R1 (6.2) + A6 (6.5) — From = vendeur, To = acheteur.
+   Sur un `buy` d'annonce, le NFT est en séquestre chez le contrat depuis le
+   listing (transaction ANTERIEURE) : la seule opération NFT est
+   marketplace → acheteur, le vendeur n'apparaît nulle part dans les
+   opérations NFT. Ordre de résolution :
+   1) expéditeur non-contrat des opérations NFT (acceptOffer & co) ;
+   2) événement du contrat (A6, indispensable en multi-vendeurs) ;
+   3) plus gros paiement NET encaissé par un wallet autre que l'acheteur ;
+   4) repli : premier expéditeur (le contrat, résolu via KNOWN_ADDRESSES). */
+function deriveNftRoute(tx, identifier, netPayments, eventIndex) {
   const ops = (tx.operations || []).filter(
     op => op.type === "nft" && op.identifier === identifier
   );
@@ -336,16 +448,34 @@ function deriveNftRoute(tx, identifier, methodClean) {
     receivers[receivers.length - 1] || null;
 
   let fromErd = senders.find(s => !isSmartContract(s)) || null;
-  /* FIX F7 : uniquement pour les VENTES (NFT en escrow → payout au vendeur).
-     Sur un mint/giveaway, les payouts sortant du SC sont des royalties ou
-     parts créateur, PAS un vendeur → on garde le SC comme From (résolu via
-     KNOWN_ADDRESSES, ex. "Boogas Caveman Mint"), comme le Python 5.4. */
-  if (!fromErd && F7_METHODS.has(methodClean || "")) {
-    fromErd = sellerFromPayouts(tx, toErd);
-  }
-  if (!fromErd) fromErd = senders[0] || null;
 
+  if (!fromErd && eventIndex) {
+    for (const cand of eventIndex[identifier] || []) {
+      if (cand !== toErd && !isSmartContract(cand)) { fromErd = cand; break; }
+    }
+  }
+
+  if (!fromErd && netPayments && netPayments.length) {
+    const cands = netPayments.filter(p => p.receiver && p.receiver !== toErd);
+    if (cands.length) {
+      fromErd = cands.reduce((a, b) => (b.value > a.value ? b : a)).receiver;
+    }
+  }
+
+  if (!fromErd) fromErd = senders[0] || null;
   return [fromErd, toErd];
+}
+
+/* FIX A2 (6.4) — la sémantique de tx.sender DEPEND de la méthode :
+   acheteur pour buy/mint/bid, mais VENDEUR pour acceptOffer /
+   acceptGlobalOffer (le propriétaire accepte l'offre d'un tiers). Le repli
+   uniforme (receiver, sender) inversait ces deux méthodes. */
+const SELLER_IS_TX_SENDER = new Set(["acceptoffer", "acceptglobaloffer"]);
+
+function fallbackRoute(tx, methodClean) {
+  if (methodClean === "giveaway") return [tx.sender, tx.receiver];
+  if (SELLER_IS_TX_SENDER.has(methodClean)) return [tx.sender, tx.receiver];
+  return [tx.receiver, tx.sender];
 }
 
 /* FIX F2 */
@@ -396,53 +526,88 @@ function detectMarketplace(tx) {
   return null;
 }
 
-function extractPayments(tx) {
-  const payments = [];
-  for (const op of tx.operations || []) {
-    const sName = op.senderAssets?.name || "";
-    const rName = op.receiverAssets?.name || "";
-
-    if (op.type === "egld") {
-      if (isSmartContract(op.receiver)) continue;
-      if (
-        (sName.startsWith("XOXNO:") && rName.startsWith("XOXNO:")) ||
-        rName.includes("Accumulator") ||
-        sName.includes("OOX") || rName.includes("OOX") ||
-        rName.includes("Launchpad Manager")
-      ) continue;
-      const v = formatEgld(op.value);
-      if (v > 0) payments.push({ value: v, token: "EGLD" });
-
-    } else if (op.type === "esdt" && op.esdtType === "FungibleESDT") {
-      if (sName.includes("Marketplace")) continue;
-      const dec = Number.isFinite(op.decimals) ? op.decimals : 6;
-      const amount = Number(op.value || 0) / 10 ** dec;
-      if (amount > 0) payments.push({
-        value: Math.round(amount * 1e6) / 1e6,
-        token: op.ticker || op.identifier || "TOKEN",
-      });
+/* FIX A5 (6.4) — remboursements de gaz : les SCR portant la donnée @6f6b
+   (« ok » en hex) ou isRefund=true sont des restitutions de gaz non
+   consommé, pas des paiements. S'ils apparaissent dans operations, ils
+   gonflent le prix (et le total des bulkBuy où les montants sont sommés). */
+function collectRefunds(tx) {
+  const refunds = new Set();
+  for (const scr of tx.results || []) {
+    if (!scr || typeof scr !== "object") continue;
+    let isRefund = scr.isRefund === true;
+    if (!isRefund) {
+      const d = (decodeBase64(scr.data || "") || "").trim();
+      isRefund = d === "@6f6b";
+    }
+    if (isRefund && scr.receiver && scr.value != null) {
+      refunds.add(`${scr.receiver}|${scr.value}`);
     }
   }
-  if (!payments.length && tx.value) {
-    const v = formatEgld(tx.value);
-    if (v > 0) payments.push({ value: v, token: "EGLD" });
-  }
-  return payments;
+  return refunds;
 }
 
-function getMainPayment(payments, methodClean) {
-  if (!payments.length) return null;
+/* Portage 6.7 — règle unique M1 : est « net » tout transfert dont le
+   DESTINATAIRE est un wallet (ce qui atterrit chez le vendeur, prix hors
+   frais marketplace). L'ancien filtre ESDT par EXPEDITEUR (« sender
+   contient Marketplace ») était FAUX : sur XOXNO le vendeur est payé PAR
+   le contrat → toutes les ventes en WEGLD perdaient leur prix. Les filtres
+   par noms (XOXNO:/Accumulator/OOX/Launchpad) deviennent inutiles : tout
+   flux vers un contrat est écarté par l'adresse. Retourne { net, gross }. */
+function extractPayments(tx) {
+  const net = [], gross = [];
+  const refunds = collectRefunds(tx);                       /* FIX A5 */
+
+  for (const op of tx.operations || []) {
+    if (refunds.has(`${op.receiver || ""}|${op.value}`)) continue;
+
+    let token, decimals;
+    if (op.type === "egld") {
+      token = "EGLD"; decimals = 18;
+    } else if (op.type === "esdt" &&
+               (op.esdtType || "FungibleESDT") === "FungibleESDT") {
+      token = op.ticker || (op.identifier || "UNKNOWN").split("-")[0];
+      /* FIX M2 : décimales lues sur l'opération, défaut 18 (plus 6 —
+         WEGLD & co sont en 18, l'ancien défaut divisait par 10^6). */
+      decimals = Number.isFinite(op.decimals) ? op.decimals : 18;
+    } else continue;
+
+    const raw = Number(op.value || 0);
+    if (!(raw > 0)) continue;
+
+    const entry = {
+      value: raw / 10 ** decimals, token,
+      sender: op.sender, receiver: op.receiver,
+    };
+    gross.push(entry);
+    if (!isSmartContract(op.receiver)) net.push(entry);     /* règle M1 */
+  }
+
+  /* FIX M3 : repli tx.value (brut, net si le destinataire est un wallet) */
+  if (!gross.length && tx.value) {
+    const v = formatEgld(tx.value);
+    if (v > 0) {
+      const entry = { value: v, token: "EGLD",
+                      sender: tx.sender, receiver: tx.receiver };
+      gross.push(entry);
+      if (!isSmartContract(tx.receiver)) net.push(entry);
+    }
+  }
+  return { net, gross };
+}
+
+/* Portage 6.7 : pool net prioritaire, repli brut (M3) */
+function getMainPayment(net, gross, methodClean) {
+  const pool = net.length ? net : gross;
+  if (!pool.length) return null;
   if (methodClean === "bulkbuy" || methodClean === "bulkswap") {
-    const token = payments[0].token;
-    const total = payments
+    const token = pool[0].token;
+    const total = pool
       .filter(p => p.token === token)
       .reduce((s, p) => s + p.value, 0);
     return { value: total, token };
   }
-  const valid = payments.filter(p => p.value > 0);
-  return valid.length
-    ? valid.reduce((a, b) => (b.value > a.value ? b : a))
-    : null;
+  const best = pool.reduce((a, b) => (b.value > a.value ? b : a));
+  return { value: best.value, token: best.token };
 }
 
 /* FIX F3 + B11 */
@@ -751,8 +916,25 @@ async function analyzeTx(txOrHash) {
   if (!ALLOWED_FUNCTIONS.has(fn)) return;
   if (FORBIDDEN_KEYWORDS.some(k => fn.includes(k))) return;
 
-  const payments = extractPayments(tx);
-  const mainPayment = getMainPayment(payments, fn);
+  /* Les tx issues de la LISTE n'ont ni `logs` ni `results` : les événements
+     (A6, appariement vendeur en séquestre / multi-vendeurs) et les
+     remboursements de gaz (A5) en dépendent. Pour les ventes, on recharge
+     une fois la transaction complète — le Python fait ce GET pour chaque tx. */
+  const SALE_METHODS = new Set([
+    "buy", "bulkbuy", "buyswap", "bulkswap", "acceptoffer", "acceptglobaloffer",
+  ]);
+  if (SALE_METHODS.has(fn) && tx.logs === undefined && tx.results === undefined) {
+    const full = await throttledFetchJson(
+      `${API_BASE}/transactions/${tx.txHash}?withOperations=true`);
+    if (full && typeof full === "object") {
+      full.txHash = full.txHash || tx.txHash;
+      tx = full;
+    }
+  }
+
+  const { net, gross } = extractPayments(tx);
+  const mainPayment = getMainPayment(net, gross, fn);
+  const eventIndex = buildEventIndex(tx);                   /* FIX A6 */
   const market = detectMarketplace(tx);
 
   if (fn === "bid") {
@@ -777,6 +959,7 @@ async function analyzeTx(txOrHash) {
 
   const nftOps = (tx.operations || []).filter(
     op => op.type === "nft" && op.identifier &&
+          op.esdtType !== "MetaESDT" &&              /* FIX M4 : jeton DeFi */
           op.action !== "burn" && op.receiver
   );
   if (!nftOps.length) return;
@@ -807,15 +990,14 @@ async function analyzeTx(txOrHash) {
       if (!byCollection.has(coll)) byCollection.set(coll, []);
       byCollection.get(coll).push(id);
     }
-    /* Fallback FIX F1 si aucune opération NFT exploitable */
-    const fbFrom = fn === "giveaway" ? tx.sender : tx.receiver;
-    const fbTo   = fn === "giveaway" ? tx.receiver : tx.sender;
+    /* Repli FIX A2 : sémantique de tx.sender selon la méthode */
+    const [fbFrom, fbTo] = fallbackRoute(tx, fn);
 
     let firstRecap = true;
     for (const [coll, ids] of byCollection) {
       /* FIX F6 : route réelle par collection. Plusieurs vendeurs/acheteurs
          distincts (ex. bulkBuy multi-listings) → "Multiple". */
-      const routes = ids.map(id => deriveNftRoute(tx, id, fn));
+      const routes = ids.map(id => deriveNftRoute(tx, id, net, eventIndex));
       const fromAddrs = new Set(routes.map(r => r[0]).filter(Boolean));
       const toAddrs   = new Set(routes.map(r => r[1]).filter(Boolean));
 
@@ -857,13 +1039,9 @@ async function analyzeTx(txOrHash) {
     /* Parité Python (format_nft_entry) : op.value = nombre d'exemplaires
        pour les SFT/Meta-ESDT → badge ×N sur la vignette si > 1. */
     const qty = parseInt(op.value, 10) || 1;
-    let [fromErd, toErd] = deriveNftRoute(tx, id, fn);
-    /* Fallback FIX F1 (Python) : aucune opération NFT exploitable →
-       giveaway = (sender, receiver), sinon (receiver, sender). */
-    if (!fromErd && !toErd) {
-      fromErd = fn === "giveaway" ? tx.sender : tx.receiver;
-      toErd   = fn === "giveaway" ? tx.receiver : tx.sender;
-    }
+    let [fromErd, toErd] = deriveNftRoute(tx, id, net, eventIndex);
+    /* Repli FIX A2 : aucune opération NFT exploitable */
+    if (!fromErd && !toErd) [fromErd, toErd] = fallbackRoute(tx, fn);
     emitSale({
       txHash: tx.txHash, timestamp: tx.timestamp,
       method: fn, identifier: id, collection: coll,
